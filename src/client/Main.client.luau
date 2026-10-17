@@ -10,6 +10,7 @@ local attackRemote = remotes:WaitForChild("Attack")
 local stateRemote = remotes:WaitForChild("State")
 local requestState = remotes:WaitForChild("RequestState")
 local notifyRemote = remotes:WaitForChild("Notify")
+local GuiService = game:GetService("GuiService")
 local gui = Instance.new("ScreenGui")
 gui.Name = "AetheriaHUD"
 gui.ResetOnSpawn = false
@@ -41,7 +42,7 @@ local function bar(parent, y, color)
 	return fill
 end
 
-local stats = panel(UDim2.fromOffset(300, 155), UDim2.fromOffset(12, 12))
+local stats = panel(UDim2.fromOffset(270, 155), UDim2.fromOffset(12, 12))
 label(stats, "AETHERIA", UDim2.fromOffset(14, 8), UDim2.new(1, -28, 0, 25), 23, colors.gold)
 label(stats, "ORMAN MUHAFIZLARI", UDim2.fromOffset(15, 33), UDim2.new(1, -28, 0, 18), 11, colors.muted)
 local healthText = label(stats, "Can • —", UDim2.fromOffset(14, 56), UDim2.new(1, -28, 0, 20))
@@ -50,11 +51,11 @@ local xpText = label(stats, "Seviye —  •  XP —", UDim2.fromOffset(14, 92),
 local xpFill = bar(stats, 116, colors.xp)
 local goldText = label(stats, "Altın 0", UDim2.fromOffset(14, 129), UDim2.new(1, -28, 0, 18), 12, colors.gold)
 
-local quest = panel(UDim2.fromOffset(300, 151), UDim2.fromOffset(12, 177))
+local quest = panel(UDim2.fromOffset(270, 132), UDim2.fromOffset(12, 177))
 label(quest, "ORMANIN ÇAĞRISI", UDim2.fromOffset(14, 9), UDim2.new(1, -28, 0, 22), 14, colors.gold)
 local questText = label(quest, "Muhafızı bul ve görevini al.", UDim2.fromOffset(14, 35), UDim2.new(1, -28, 0, 47), 14)
 local crystalText = label(quest, "Kristal • Henüz kazanılmadı", UDim2.fromOffset(14, 86), UDim2.new(1, -28, 0, 20), 12, colors.muted)
-local saveText = label(quest, "", UDim2.fromOffset(14, 115), UDim2.new(1, -28, 0, 22), 11, colors.muted)
+local saveText = label(quest, "", UDim2.fromOffset(14, 109), UDim2.new(1, -28, 0, 18), 10, colors.muted)
 
 local hint = panel(UDim2.fromOffset(350, 48), UDim2.new(0.5, 0, 1, -12), Vector2.new(0.5, 1))
 local hintText = label(hint, "Muhafıza yaklaş • Görevi al • Ormanı koru", UDim2.fromOffset(12, 4), UDim2.new(1, -24, 1, -8), 12, colors.muted)
@@ -64,6 +65,8 @@ create("UIStroke", { Color = colors.gold, Transparency = 0.3 }, attackButton)
 local toast = panel(UDim2.fromOffset(350, 65), UDim2.new(0.5, 0, 0, 12), Vector2.new(0.5, 0))
 toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
+local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
+require(script.Parent:WaitForChild("PetVisuals")).start()
 
 local scales = {}
 for _, frame in ipairs({ stats, quest, hint, attackButton, toast }) do
@@ -76,7 +79,12 @@ local function resize()
 	local scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 680), 0.58, 1)
 	for _, item in pairs(scales) do item.Scale = scale end
 	quest.Position = UDim2.fromOffset(12, 24 + 155 * scale)
-	toast.Position = UDim2.new(0.5, 0, 0, 12 + (viewport.X < 850 and 330 * scale or 0))
+	local eventScale = math.clamp(math.min(viewport.X / 780, viewport.Y / 650), 0.54, 1)
+	local toastTop = viewport.X < 480 and (60 + 287 * scale + 228 * eventScale) or 12
+	toast.Position = UDim2.new(0.5, 0, 0, toastTop)
+	attackButton.Position = viewport.Y < 450 and viewport.X > viewport.Y
+		and UDim2.new(1, -140, 1, -70) or UDim2.new(1, -24, 1, -155)
+	worldHUD:resize(viewport)
 end
 local viewportConnection
 local function watchCamera()
@@ -105,7 +113,7 @@ updateInputHint()
 
 local lastAttack = 0
 local function attack()
-	if UserInputService:GetFocusedTextBox() then return end
+	if UserInputService:GetFocusedTextBox() or worldHUD.open or GuiService.MenuIsOpen then return end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 or os.clock() - lastAttack < 0.2 then return end
@@ -152,7 +160,8 @@ stateRemote.OnClientEvent:Connect(function(state)
 	local xp, needed = tonumber(state.xp) or 0, math.max(1, tonumber(state.xpNeeded) or 100)
 	xpText.Text = string.format("Seviye %d  •  XP %d / %d", state.level or 1, xp, needed)
 	xpFill.Size = UDim2.fromScale(math.clamp(xp / needed, 0, 1), 1)
-	goldText.Text = string.format("Altın %d", state.gold or 0)
+	goldText.Text = string.format("Altın %d  •  Yıldız tozu %d", state.gold or 0, state.stardust or 0)
+	worldHUD:setState(state)
 	if state.questStatus == "active" then
 		questText.Text = string.format("Ormanı koru: %d / %d yaratık yenildi.", state.questKills or 0, state.questTarget or 3)
 	elseif state.questStatus == "return" then

@@ -4,12 +4,14 @@ local Config = require(ReplicatedStorage.Shared.GameConfig)
 local Progression = require(ReplicatedStorage.Shared.Progression)
 local ProfileStore = require(script.Parent.ProfileStore)
 local World = require(script.Parent.World)
+local Pets = require(ReplicatedStorage.Shared.Pets)
+local BossService = require(script.Parent.BossService)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -22,6 +24,8 @@ local lastPrompt = {}
 local movement = {}
 local enemies = {}
 local closing = false
+local lastEquip = {}
+local bossService
 
 local function state(player)
 	local handle = profiles[player]
@@ -32,6 +36,8 @@ local function state(player)
 		gold = p.gold, kills = p.kills, questStatus = p.questStatus,
 		questKills = p.questKills, questTarget = Config.QuestTarget,
 		hasCrystal = p.hasCrystal, saveStatus = handle.status,
+		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
+		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
 	})
 end
 local function livingCharacter(player)
@@ -50,12 +56,42 @@ local function trustedPosition(player, root)
 	return check and os.clock() >= check.blockedUntil and (root.Position - check.position).Magnitude < 12
 end
 
+local function savePlayer(player)
+	task.spawn(function()
+		if not profiles[player] then return end
+		if not ProfileStore.save(player, false) and player.Parent then
+			-- Stop mutations before the removal callback yields on final persistence.
+			profiles[player] = nil
+			player:Kick("İlerlemen güvenle kaydedilemedi. Lütfen yeniden katıl.")
+		end
+		state(player)
+	end)
+end
+bossService = BossService.new(world, {
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
+	state = state, save = savePlayer,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+	broadcast = function(message) remotes.Notify:FireAllClients(message) end,
+})
+remotes.EquipPet.OnServerEvent:Connect(function(player, petId, ...)
+	if select("#", ...) ~= 0 or type(petId) ~= "string" or #petId > 32 then return end
+	local handle = profiles[player]
+	local now = os.clock()
+	if not handle or now - (lastEquip[player] or 0) < 0.5 then return end
+	lastEquip[player] = now
+	if Pets.equip(handle.data, petId, Config) then
+		player:SetAttribute("EquippedPet", handle.data.equippedPet or "")
+		state(player)
+	end
+end)
+
 remotes.RequestState.OnServerEvent:Connect(function(player, ...)
 	if select("#", ...) ~= 0 then return end
 	local now = os.clock()
 	if now - (lastRequest[player] or 0) < 0.5 then return end
 	lastRequest[player] = now
 	state(player)
+	remotes.WorldState:FireClient(player, bossService:snapshot())
 end)
 
 remotes.Attack.OnServerEvent:Connect(function(player, ...)
@@ -74,6 +110,14 @@ remotes.Attack.OnServerEvent:Connect(function(player, ...)
 			if candidate <= distance then nearest, distance = model, candidate end
 		end
 	end
+	for model in bossService.targets do
+		local enemyRoot = model:FindFirstChild("HumanoidRootPart")
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		if enemyRoot and humanoid and humanoid.Health > 0 then
+			local candidate = (enemyRoot.Position - root.Position).Magnitude
+			if candidate <= distance then nearest, distance = model, candidate end
+		end
+	end
 	if nearest then
 		local targetRoot = nearest.HumanoidRootPart
 		local params = RaycastParams.new()
@@ -81,8 +125,14 @@ remotes.Attack.OnServerEvent:Connect(function(player, ...)
 		params.FilterDescendantsInstances = {player.Character}
 		local hit = workspace:Raycast(root.Position, targetRoot.Position - root.Position, params)
 		if hit and not hit.Instance:IsDescendantOf(nearest) then return end
-		enemies[nearest].lastAttacker = player
-		nearest.Humanoid:TakeDamage(Config.AttackDamage)
+		local profile = profiles[player].data
+		local damage = Config.AttackDamage + math.min(30, profile.level - 1) * 2 + Pets.damageBonus(profile, Config)
+		if bossService.targets[nearest] then
+			bossService:damage(nearest, player, damage)
+		else
+			enemies[nearest].lastAttacker = player
+			nearest.Humanoid:TakeDamage(math.min(damage, nearest.Humanoid.Health))
+		end
 	end
 end)
 
@@ -101,38 +151,46 @@ world.QuestPrompt.Triggered:Connect(function(player)
 	state(player)
 end)
 
-local function spawnEnemy(position, index)
+local function spawnEnemy(position, index, regionId)
 	if closing then return end
-	local model = World.createEnemy(world.EnemyFolder, position, index)
+	local model = World.createEnemy(world.EnemyFolder, position, index, regionId)
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	local root = model:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not root then model:Destroy() return end
-	humanoid.MaxHealth = Config.EnemyHealth
-	humanoid.Health = Config.EnemyHealth
+	local region = Config.Regions[regionId] or Config.Regions.forest
+	humanoid.MaxHealth = region.EnemyHealth
+	humanoid.Health = region.EnemyHealth
 	humanoid.WalkSpeed = Config.EnemyWalkSpeed
 	root:SetNetworkOwner(nil)
-	local info = {spawn = position, lastAttack = 0, lastAttacker = nil}
+	local info = {spawn = position, lastAttack = 0, lastAttacker = nil, damage = region.EnemyDamage}
 	enemies[model] = info
 	humanoid.Died:Connect(function()
 		enemies[model] = nil
 		local player = info.lastAttacker
 		if player and profiles[player] then
-			Progression.recordKill(profiles[player].data, Config)
+			if regionId == "forest" then
+				Progression.recordKill(profiles[player].data, Config)
+			else
+				local profile = profiles[player].data
+				profile.kills += 1
+				profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, Config.KillXP * region.EnemyLevel)
+			end
 			state(player)
 			if profiles[player].data.questStatus == "return" then
 				remotes.Notify:FireClient(player, "Hedef tamamlandı! Köydeki bilgeye dön.")
 			end
 		end
 		task.delay(3, function() model:Destroy() end)
-		task.delay(Config.EnemyRespawnSeconds, function() spawnEnemy(position, index) end)
+		task.delay(Config.EnemyRespawnSeconds, function() spawnEnemy(position, index, regionId) end)
 	end)
 end
-for index, position in world.EnemySpawns do spawnEnemy(position, index) end
+for index, entry in world.EnemySpawns do spawnEnemy(entry.position, index, entry.regionId) end
 
 task.spawn(function()
 	while not closing do
 		task.wait(0.25)
 		local now = os.clock()
+		bossService:update()
 		for _, player in Players:GetPlayers() do
 			local root = livingCharacter(player)
 			if root then
@@ -175,7 +233,7 @@ task.spawn(function()
 					params.FilterDescendantsInstances = {model}
 					local hit = workspace:Raycast(root.Position, targetRoot.Position - root.Position, params)
 					if not hit or hit.Instance:IsDescendantOf(targetRoot.Parent) then
-						targetHumanoid:TakeDamage(Config.EnemyDamage)
+						targetHumanoid:TakeDamage(info.damage)
 					end
 				end
 			else humanoid:MoveTo(info.spawn) end
@@ -214,30 +272,33 @@ local function playerAdded(player)
 	end
 	if not player.Parent then ProfileStore.save(player, true) return end
 	profiles[player] = handle
+	player:SetAttribute("EquippedPet", handle.data.equippedPet or "")
 	state(player)
+	remotes.WorldState:FireClient(player, bossService:snapshot())
 end
 Players.PlayerAdded:Connect(playerAdded)
 for _, player in Players:GetPlayers() do task.spawn(playerAdded, player) end
 Players.PlayerRemoving:Connect(function(player)
 	profiles[player] = nil
+	lastEquip[player] = nil
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)
 task.spawn(function()
 	while not closing do
 		task.wait(45)
-		for player in profiles do
-			task.spawn(function()
-				if not ProfileStore.save(player, false) and player.Parent then
-					player:Kick("İlerlemen güvenle kaydedilemedi. Lütfen yeniden katıl.")
-				end
-				state(player)
-			end)
-		end
+		for player in profiles do savePlayer(player) end
+	end
+end)
+task.spawn(function()
+	while not closing do
+		remotes.WorldState:FireAllClients(bossService:snapshot())
+		task.wait(3)
 	end
 end)
 game:BindToClose(function()
 	closing = true
+	bossService:close()
 	local pending = 0
 	for player in profiles do
 		pending += 1

@@ -22,3 +22,17 @@ Bu kontroller Windows bilgisayarında yapılmalıdır; Linux üzerinde başarıl
 2. Farklı bir Rojo eklentisi bulunan ayrı test klasörünü `-PluginDirectory` ile seç; yardımcı mevcut dosyayı değiştirmeden durmalı. Gerçek eklentilerini silmeden test et.
 3. Yardımcıyı normal çalıştır, Studio'da boş Baseplate aç ve Rojo ile `localhost:34872` adresine bağlan. Değişiklikleri inceleyip kabul et; Play ile görev döngüsünü dene.
 4. Yerel bir kaynak dosyasındaki geçici değişikliğin Studio'ya ulaştığını kontrol edip değişikliği geri al. Studio'daki değişikliğin otomatik Git commit veya Roblox yayını oluşturmadığını doğrula.
+
+## Açık dünya, boss ve pet doğrulaması
+
+Bu kontroller de henüz Studio'da uygulanmış sayılmaz.
+
+1. **Üç bölge:** Köyden orman, bataklık ve köz bölgesine yürü. Harita işareti konuma uymalı, harita adları bölge tabelalarıyla eşleşmeli; bağlantı yolları geçilebilir olmalı. Düşmanlar ilgili bölgenin sağlık/hasar değerlerini kullanmalı, güvenli köyde oyuncuya hasar verilmemeli. Bölge dışına gidip geri dönerek streaming sonrasında modellerin yeniden göründüğünü kontrol et.
+2. **Demo ve gerçek saat:** Studio'da ilk boss yaklaşık 20. saniyede, sonrakiler başlangıçtan 200 ve 380. saniyelerde çıkmalı. Bunlar test takvimidir. Yayınlanmış özel testte UTC saat başı/:20/:40 kontrol edilmeli; İstanbul ekranı UTC+3 göstermeli. Saniyelerce geciken bir sunucu güncellemesi aynı bossu iki kez çıkarmamalı.
+3. **Karşılaşma ömrü:** Boss yenildiğinde aynı zaman diliminde yeniden çıkmamalı. Süresi dolduğunda kaybolmalı ve ödül vermemeli. Studio boss sağlığı normalin %30'u olmalı; %1 katılım eşiği de bu gerçek sağlığa dayanmalı.
+4. **Kişisel katılım:** İki oyuncu da aynı bossun en az %1 canı kadar, en az üç kabul edilmiş vuruş yapsın. Son vuruşu yalnız biri yapsa da iki oyuncu kişisel ödül almalı. Bir veya iki vuruş yapan, yalnız yakınında bekleyen veya yalnız normal düşman kesen oyuncu boss ödülü almamalı.
+5. **Savaş güvenliği:** İstemciden hedef, hasar, rastgele sayı, pet kimliği veya ödül isteyen sahte Attack argümanları gönder. Sunucu bunları kabul etmemeli. Bossun işaretli alan saldırısından çıkınca hasar alınmamalı; süresi dolmuş/yenilmiş bossun gecikmiş saldırısı işlememeli.
+6. **Geri çekilme:** Bossu başlangıcından yeterince uzaklaştır. Geri dönüp sağlığını yenilediğinde eski katılım sıfırlanmalı; farklı denemeler biriktirilerek ödül alınmamalı.
+7. **Pet koleksiyonu:** Yalnız sahip olunan pet kuşanılabilmeli. Bilinmeyen pet veya başkasının pet kimliği reddedilmeli. Tek pet kuşanılmalı; üç pet de aynı +4 saldırı katkısı sağlamalı. Kozmetik takipçi ölüm/yeniden doğma, kuşanma değiştirme ve iki oyuncuda çoğalmamalı.
+8. **Düşüş ve garanti:** Otomatik saf testler %3 sınırını, 30. uygun zafer garantisini ve kopya petin 10 yıldız tozuna dönüşmesini kapsar. Studio'da ödül/garanti sayacının ekrana doğru taşındığını ayrıca doğrula; test kolaylığı için üretim düşüş oranını değiştirme.
+9. **Kayıt geçişi ve tekrar giriş:** Ayrı yayınlanmış testte eski v1 profilin XP/altın/görevini koruduğunu, petler/kuşanılan pet/garanti sayaçlarının geri geldiğini kontrol et. Aynı global boss karşılaşmasına başka sunucuda tekrar katılmak ikinci ödül vermemeli. DataStore hatası durumunda boş veya kısmi profil kaydedilmemeli.

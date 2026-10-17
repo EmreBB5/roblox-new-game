@@ -14,8 +14,9 @@ function Progression.addXP(level: number, xp: number, amount: number): (number, 
 end
 
 function Progression.newProfile()
-	return {version = 1, level = 1, xp = 0, gold = 0, kills = 0,
-		questStatus = "available", questKills = 0, hasCrystal = false}
+	return {version = 2, level = 1, xp = 0, gold = 0, kills = 0,
+		questStatus = "available", questKills = 0, hasCrystal = false,
+		pets = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0}
 end
 
 function Progression.sanitize(raw: any)
@@ -33,7 +34,27 @@ function Progression.sanitize(raw: any)
 		profile.questStatus = raw.questStatus
 	end
 	profile.hasCrystal = raw.hasCrystal == true
+	local function bounded(value, cap)
+		if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return 0 end
+		return math.clamp(math.floor(value), 0, cap)
+	end
+	profile.questKills = math.min(profile.questKills, 3)
+	profile.stardust = bounded(raw.stardust, 100000000)
+	for _, id in {"mossling", "tidefin", "embercub"} do
+		if type(raw.pets) == "table" and raw.pets[id] == true then profile.pets[id] = true end
+	end
+	if type(raw.equippedPet) == "string" and profile.pets[raw.equippedPet] then profile.equippedPet = raw.equippedPet end
+	for _, id in {"thornwarden", "tide_sentinel", "ember_drake"} do
+		profile.petPity[id] = bounded(if type(raw.petPity) == "table" then raw.petPity[id] else nil, 29)
+		profile.bossVictories[id] = bounded(if type(raw.bossVictories) == "table" then raw.bossVictories[id] else nil, 100000000)
+		profile.lastBossClaims[id] = bounded(if type(raw.lastBossClaims) == "table" then raw.lastBossClaims[id] else nil, 1000000000000)
+	end
 	return profile
+end
+
+-- Validated copy creates fresh nested collections for every in-flight save.
+function Progression.snapshot(profile)
+	return Progression.sanitize(profile)
 end
 
 function Progression.recordKill(profile, config)

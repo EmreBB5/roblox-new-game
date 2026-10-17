@@ -42,7 +42,7 @@ function ProfileStore.save(player, release: boolean?): boolean
 		return true
 	end
 	handle.busy = true
-	local copy = table.clone(handle.data)
+	local copy = Progression.snapshot(handle.data)
 	local writeId = HttpService:GenerateGUID(false)
 	local ok, result = pcall(function()
 		return store:UpdateAsync("player_" .. player.UserId, function(old)
