@@ -69,6 +69,7 @@ local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1,
 local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
 require(script.Parent:WaitForChild("PetVisuals")).start()
 require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"))
+require(script.Parent:WaitForChild("CombatText")).start(remotes:WaitForChild("CombatHit"))
 
 local scales = {}
 for _, frame in ipairs({ stats, quest, hint, attackButton, toast }) do

@@ -172,6 +172,7 @@ local roads = {
 	{{-110, -520}, {-340, -650}, 22}, {{-340, -650}, {-700, -835}, 22}, {{-700, -835}, {-760, -1020}, 22},
 	{{110, -520}, {360, -610}, 22}, {{360, -610}, {730, -790}, 22}, {{730, -790}, {790, -990}, 22},
 	{{-190, -140}, {-130, -140}, 14}, {{220, -215}, {190, -230}, 14}, {{18, -630}, {0, -660}, 14},
+	{{-760, -1020}, {-760, -1155}, 16}, {{790, -990}, {790, -1125}, 16},
 }
 
 local function nearRoad(x, z)
@@ -307,6 +308,32 @@ local function arena(parent, bossId, definition)
 	label(sign, definition.Name, string.format("HER SAAT :%02d · Nadir pet %%3", definition.Minute), 320)
 end
 
+local function eliteSanctums(parent)
+	for id, definition in Config.Elites do
+		local model = Instance.new("Model")
+		model.Name = "EliteSanctum_" .. id
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		model.Parent = parent
+		local position = Vector3.new(definition.X, 0.35, definition.Z)
+		local colors = regionColors[definition.RegionId]
+		disc(model, "EliteArena", position, 44, colors.ground:Lerp(palette.stone, 0.3), Enum.Material.Slate)
+		for index = 1, 8 do
+			local angle = index * math.pi / 4
+			local marker = position + Vector3.new(math.cos(angle) * 40, 0.3, math.sin(angle) * 40)
+			local rune = part(model, "EliteRune", Vector3.new(3, 0.2, 3), marker, colors.accent, Enum.Material.Neon)
+			rune.CanCollide, rune.CanTouch, rune.CanQuery = false, false, false
+		end
+		for _, side in {-1, 1} do
+			local column = position + Vector3.new(side * 31, 0, -23)
+			part(model, "EliteObelisk", Vector3.new(3, 9, 3), column + Vector3.new(0, 4.5, 0), palette.stone, Enum.Material.Slate)
+			local focus = crystal(model, column + Vector3.new(0, 9, 0), 0.5)
+			focus.Color = colors.accent
+		end
+		local sign = part(model, "EliteSign", Vector3.new(8, 5, 1), position + Vector3.new(24, 3.3, 44), palette.wood, Enum.Material.Wood)
+		label(sign, "ELİT · " .. definition.Name, "Alan uyarısından kaç · Pet eğitimi ve malzeme", 330)
+	end
+end
+
 local function resourceNodes(parent)
 	local folder = Instance.new("Folder")
 	folder.Name = "GatheringNodes"
@@ -439,6 +466,9 @@ function World.build()
 			for _, boss in Config.Bosses do
 				if Vector2.new(x - boss.X, z - boss.Z).Magnitude < 86 then blocked = true end
 			end
+			for _, elite in Config.Elites do
+				if Vector2.new(x - elite.X, z - elite.Z).Magnitude < 60 then blocked = true end
+			end
 			for _, waypoint in Config.Waypoints do
 				local point = waypoint.Position
 				if Vector2.new(x - point.x, z - point.z).Magnitude < 24 then blocked = true end
@@ -476,6 +506,7 @@ function World.build()
 	oasis.CanCollide = false
 	oasis.CanQuery = false
 	for id, definition in Config.Bosses do arena(folder, id, definition) end
+	eliteSanctums(folder)
 	local nodes = resourceNodes(folder)
 	local waypoints = travelShrines(folder)
 	local enemySpawns = {}
@@ -657,6 +688,51 @@ function World.createBoss(folder, definition)
 	model:PivotTo(CFrame.new(definition.X, 0.5 + 3 * scale, definition.Z))
 	model.PrimaryPart:SetNetworkOwner(nil)
 	return model
+end
+
+function World.createElite(folder, definition)
+	local model = World.createEnemy(folder, Vector3.new(definition.X, 0.5, definition.Z), definition.Name, definition.RegionId)
+	model.Name = definition.Name
+	model.Humanoid.DisplayName = "ELİT · " .. definition.Name
+	model.Humanoid.HealthDisplayDistance = 130
+	model.Humanoid.NameDisplayDistance = 130
+	local colors, torso = regionColors[definition.RegionId], model.Torso
+	local function ornament(name, size, offset, color, material)
+		local item = part(model, name, size, Vector3.zero, color, material)
+		item.Anchored, item.Massless = false, true
+		item.CanCollide, item.CanTouch, item.CanQuery = false, false, false
+		item.CFrame = torso.CFrame * offset
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0, weld.Part1, weld.Parent = torso, item, item
+	end
+	if definition.RegionId == "frost" then
+		for _, side in {-1, 1} do
+			ornament("GlacialShoulder", Vector3.new(1.6, 1.5, 1.4), CFrame.new(side * 1.3, 0.7, 0), colors.accent, Enum.Material.Ice)
+			ornament("GlacialCrown", Vector3.new(0.4, 1.8, 0.5), CFrame.new(side * 0.7, 2.5, 0) * CFrame.Angles(0, 0, -side * 0.3), colors.accent, Enum.Material.Neon)
+		end
+	else
+		ornament("SunCrown", Vector3.new(2.2, 0.4, 1.5), CFrame.new(0, 2.2, 0), palette.gold, Enum.Material.Metal)
+		ornament("SolarSpear", Vector3.new(0.3, 5, 0.3), CFrame.new(-1.8, 0.4, 0), palette.gold, Enum.Material.Metal)
+		ornament("SolarSpearhead", Vector3.new(0.8, 1, 0.4), CFrame.new(-1.8, 3.3, 0), colors.accent, Enum.Material.Neon)
+		ornament("SandstoneGuard", Vector3.new(1.2, 2.5, 0.4), CFrame.new(1.6, 0.1, -0.6), colors.ground, Enum.Material.Sandstone)
+	end
+	local scale = 1.65
+	model:ScaleTo(scale)
+	model:PivotTo(CFrame.new(definition.X, 0.5 + 3 * scale, definition.Z))
+	model.PrimaryPart:SetNetworkOwner(nil)
+	return model
+end
+
+function World.createEliteTelegraph(position, _direction, definition)
+	local colors = regionColors[definition.RegionId]
+	local warning = disc(workspace.AetheriaWorld, "EliteAttackWarning", Vector3.new(position.X, 0.65, position.Z), definition.Radius, colors.accent, Enum.Material.Neon)
+	warning.Transparency = 0.32
+	warning.CanCollide, warning.CanTouch, warning.CanQuery = false, false, false
+	local attack = if definition.RegionId == "frost" then "BUZ PATLAMASI" else "KUM DAMGASI"
+	local notice = label(warning, attack .. " · ALANDAN ÇIK!", string.format("%.1f sn sonra saldırı", definition.Windup), 300)
+	notice.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
+	Debris:AddItem(warning, definition.Windup)
+	return warning
 end
 
 function World.createTelegraph(position, radius, duration)

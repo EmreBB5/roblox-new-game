@@ -12,12 +12,14 @@ local BossService = require(script.Parent.BossService)
 local PartyService = require(script.Parent.PartyService)
 local TravelService = require(script.Parent.TravelService)
 local PartyRules = require(ReplicatedStorage.Shared.PartyRules)
+local PetGrowth = require(ReplicatedStorage.Shared.PetGrowth)
+local EliteService = require(script.Parent.EliteService)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "PartyAction", "PartyState", "TravelRequest", "OpenTravel"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "CombatHit", "PartyAction", "PartyState", "TravelRequest", "OpenTravel"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -35,11 +37,19 @@ local bossService
 local actions
 local partyService
 local travelService
+local eliteService
 
 local function state(player)
 	local handle = profiles[player]
 	if not handle or not player.Parent then return end
 	local p = handle.data
+	local petStats = {}
+	for petId, owned in p.pets do
+		if owned then petStats[petId] = PetGrowth.info(p, petId, Config) end
+	end
+	local equippedInfo = petStats[p.equippedPet]
+	local petLevel = if equippedInfo then equippedInfo.level else 0
+	if player:GetAttribute("PetLevel") ~= petLevel then player:SetAttribute("PetLevel", petLevel) end
 	local resource, cooldowns = 100, {}
 	if actions then resource, cooldowns = actions:snapshot(player) end
 	remotes.State:FireClient(player, {
@@ -49,6 +59,7 @@ local function state(player)
 		hasCrystal = p.hasCrystal, saveStatus = handle.status,
 		classId = p.classId, equipmentTier = p.equipmentTier, materials = table.clone(p.materials),
 		expedition = table.clone(p.expedition), resource = resource, cooldowns = cooldowns, stats = Combat.stats(p, Config),
+		petXP = table.clone(p.petXP), petStats = petStats,
 		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
 		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
 		waypoints = table.clone(p.waypoints), travel = if travelService then travelService:snapshot(player) else nil,
@@ -70,6 +81,20 @@ local function trustedPosition(player, root)
 	return check and os.clock() >= check.blockedUntil and (root.Position - check.position).Magnitude < 12
 end
 
+local function awardPet(player, amount)
+	local handle = profiles[player]
+	if not handle then return end
+	local result = PetGrowth.award(handle.data, amount, Config)
+	if result and result.leveledUp then
+		remotes.Notify:FireClient(player, "Petin seviye atladı! Yeni seviye: " .. tostring(result.level))
+	end
+end
+local function worldSnapshot()
+	local snapshot = bossService:snapshot()
+	snapshot.elites = if eliteService then eliteService:snapshot() else {}
+	return snapshot
+end
+
 local function savePlayer(player)
 	task.spawn(function()
 		if not profiles[player] then return end
@@ -84,7 +109,10 @@ end
 bossService = BossService.new(world, {
 	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
 	state = state, save = savePlayer,
-	eligible = function(player) Campaign.recordBoss(profiles[player].data, Config) end,
+	eligible = function(player)
+		Campaign.recordBoss(profiles[player].data, Config)
+		awardPet(player, Config.PetProgression.BossXP)
+	end,
 	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
 	broadcast = function(message) remotes.Notify:FireAllClients(message) end,
 })
@@ -106,16 +134,42 @@ remotes.RequestState.OnServerEvent:Connect(function(player, ...)
 	if now - (lastRequest[player] or 0) < 0.5 then return end
 	lastRequest[player] = now
 	state(player)
-	remotes.WorldState:FireClient(player, bossService:snapshot())
+	remotes.WorldState:FireClient(player, worldSnapshot())
 	if partyService then remotes.PartyState:FireClient(player, partyService:snapshot(player)) end
 end)
 
+eliteService = EliteService.new(world, {
+	changed = function() remotes.WorldState:FireAllClients(worldSnapshot()) end,
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
+	assists = function(player, position) return if partyService then partyService:assists(player, position) else {} end,
+	reward = function(player, definition, personal)
+		local profile = profiles[player].data
+		local xp = PartyRules.rewardXP(definition.XP, not personal, Config)
+		Progression.recordRegionKill(profile, definition.RegionId, xp, Config)
+		Campaign.recordKill(profile, definition.RegionId, Config)
+		if personal then
+			profile.gold = math.min(999999999, profile.gold + definition.Gold)
+			local material = Config.Regions[definition.RegionId].Material
+			if material then profile.materials[material] = math.min(100000000, profile.materials[material] + math.max(0, definition.MaterialAmount - 1)) end
+		end
+		awardPet(player, if personal then Config.PetProgression.EliteXP else Config.PetProgression.NormalXP)
+		remotes.Notify:FireClient(player, if personal then "Elit yenildi! Kişisel ödüllerin verildi; elitlerden pet düşmez." else "Grup desteği: %70 XP, bir malzeme ve kuşanılmış pet XP'si.")
+		state(player)
+		savePlayer(player)
+	end,
+})
 actions = PlayerActions.new(world, {
-	profiles = profiles, enemies = enemies, bosses = bossService,
+	profiles = profiles, enemies = enemies, bosses = bossService, elites = eliteService,
 	living = livingCharacter, trusted = trustedPosition, safe = isSafe,
 	state = state, save = savePlayer,
 	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
 	effect = function(payload) remotes.CombatEffect:FireAllClients(payload) end,
+	hit = function(player, payload)
+		local amount = payload.amount
+		if player.Parent and type(amount) == "number" and amount == amount and amount > 0 and amount < math.huge then
+			remotes.CombatHit:FireClient(player, payload)
+		end
+	end,
 })
 actions:connectGathering()
 partyService = PartyService.new({
@@ -196,6 +250,7 @@ local function spawnEnemy(position, index, regionId)
 				local xp = PartyRules.rewardXP(Config.KillXP * region.EnemyLevel, recipient ~= player, Config)
 				Progression.recordRegionKill(profile, regionId, xp, Config)
 				Campaign.recordKill(profile, regionId, Config)
+				awardPet(recipient, Config.PetProgression.NormalXP)
 				state(recipient)
 				if not wasReady and profile.questStatus == "return" then
 					remotes.Notify:FireClient(recipient, "Hedef tamamlandı! Köydeki bilgeye dön.")
@@ -213,6 +268,7 @@ task.spawn(function()
 		task.wait(0.25)
 		local now = os.clock()
 		bossService:update()
+		eliteService:update()
 		for _, player in Players:GetPlayers() do
 			local root = livingCharacter(player)
 			if root then
@@ -285,7 +341,7 @@ local function playerAdded(player)
 	if player.Character then actions:applyStats(player) end
 	player:SetAttribute("EquippedPet", handle.data.equippedPet or "")
 	state(player)
-	remotes.WorldState:FireClient(player, bossService:snapshot())
+	remotes.WorldState:FireClient(player, worldSnapshot())
 	partyService:push()
 end
 Players.PlayerAdded:Connect(playerAdded)
@@ -313,13 +369,14 @@ task.spawn(function()
 end)
 task.spawn(function()
 	while not closing do
-		remotes.WorldState:FireAllClients(bossService:snapshot())
+		remotes.WorldState:FireAllClients(worldSnapshot())
 		task.wait(3)
 	end
 end)
 game:BindToClose(function()
 	closing = true
 	bossService:close()
+	eliteService:close()
 	local pending = 0
 	for player in profiles do
 		pending += 1

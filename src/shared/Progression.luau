@@ -14,9 +14,9 @@ function Progression.addXP(level: number, xp: number, amount: number): (number, 
 end
 
 function Progression.newProfile()
-	return {version = 4, level = 1, xp = 0, gold = 0, kills = 0,
+	return {version = 5, level = 1, xp = 0, gold = 0, kills = 0,
 		questStatus = "available", questKills = 0, hasCrystal = false,
-		pets = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
+		pets = {}, petXP = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
 		waypoints = {village = true}, materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
 end
 
@@ -42,7 +42,10 @@ function Progression.sanitize(raw: any)
 	profile.questKills = math.min(profile.questKills, 3)
 	profile.stardust = bounded(raw.stardust, 100000000)
 	for _, id in {"mossling", "tidefin", "embercub"} do
-		if type(raw.pets) == "table" and raw.pets[id] == true then profile.pets[id] = true end
+		if type(raw.pets) == "table" and raw.pets[id] == true then
+			profile.pets[id] = true
+			profile.petXP[id] = bounded(if type(raw.petXP) == "table" then raw.petXP[id] else nil, 1080)
+		end
 	end
 	if type(raw.equippedPet) == "string" and profile.pets[raw.equippedPet] then profile.equippedPet = raw.equippedPet end
 	for _, id in {"thornwarden", "tide_sentinel", "ember_drake"} do

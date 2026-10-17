@@ -63,7 +63,7 @@ function Actions:validTarget(player, origin, model, range)
 end
 function Actions:targets(player, root, range, limit)
 	local candidates = {}
-	for _, collection in {self.callbacks.enemies, self.callbacks.bosses.targets} do
+	for _, collection in {self.callbacks.enemies, self.callbacks.bosses.targets, self.callbacks.elites.targets} do
 		for model in collection do
 			local target = self:validTarget(player, root.Position, model, range)
 			if target then table.insert(candidates, {model = model, root = target, distance = (target.Position - root.Position).Magnitude}) end
@@ -74,15 +74,34 @@ function Actions:targets(player, root, range, limit)
 	return candidates
 end
 function Actions:damage(player, targets, damage)
+	local hits = {}
+	if type(damage) ~= "number" or damage ~= damage or damage <= 0 or damage == math.huge then return hits end
 	for _, target in targets do
 		local model = target.model
-		if self.callbacks.bosses.targets[model] then self.callbacks.bosses:damage(model, player, damage)
-		elseif self.callbacks.enemies[model] then
-			self.callbacks.enemies[model].lastAttacker = player
-			model.Humanoid:TakeDamage(math.min(damage, model.Humanoid.Health))
+		local position = target.root.Position
+		local actual = 0
+		if self.callbacks.bosses.targets[model] then actual = self.callbacks.bosses:damage(model, player, damage)
+		elseif self.callbacks.elites.targets[model] then actual = self.callbacks.elites:damage(model, player, damage)
+		elseif self.callbacks.enemies[model] and model.Parent then
+			local humanoid = model:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				local info = self.callbacks.enemies[model]
+				local previousAttacker = info.lastAttacker
+				info.lastAttacker = player
+				local before = humanoid.Health
+				humanoid:TakeDamage(math.min(damage, before))
+				actual = math.clamp(before - humanoid.Health, 0, math.min(damage, before))
+				if actual == 0 then info.lastAttacker = previousAttacker end
+			end
+		end
+		if type(actual) == "number" and actual == actual and actual > 0 and actual < math.huge then
+			local payload = {position = position, amount = actual, kind = "damage"}
+			table.insert(hits, payload)
+			self.callbacks.hit(player, payload)
 		end
 	end
-	self:runtime(player).lastCombat = now()
+	if #hits > 0 then self:runtime(player).lastCombat = now() end
+	return hits
 end
 function Actions:basic(player)
 	if not self:gate(player, "basic") then return end
@@ -115,8 +134,11 @@ function Actions:ability(player, slot)
 		if messages[result.status] then self.callbacks.notify(player, messages[result.status]) end
 		return
 	end
-	local damage
-	if healing then humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + definition.Heal)
+	local damage, healed
+	if healing then
+		local before = humanoid.Health
+		humanoid.Health = math.min(humanoid.MaxHealth, before + definition.Heal)
+		healed = humanoid.Health - before
 	else
 		damage = math.floor(Combat.stats(profile, Config).basicDamage * definition.Multiplier)
 		self:damage(player, targets, damage)
@@ -124,6 +146,9 @@ function Actions:ability(player, slot)
 	self.callbacks.effect({userId = player.UserId, abilityId = profile.classId .. "_" .. slot, classId = profile.classId, kind = definition.Kind,
 		origin = root.Position, target = if targets[1] then targets[1].root.Position else nil, radius = definition.Radius, damage = damage})
 	self.callbacks.state(player)
+	if healed and healed == healed and healed > 0 and healed < math.huge then
+		self.callbacks.hit(player, {position = root.Position, amount = healed, kind = "heal"})
+	end
 end
 function Actions:selectClass(player, classId)
 	if type(classId) ~= "string" or #classId > 16 or not Config.Classes[classId] or not self:gate(player, "class") then return end

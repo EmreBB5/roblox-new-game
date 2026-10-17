@@ -1,5 +1,14 @@
 -- Pure shared data: no Roblox globals. Loot decisions remain on the server.
 return table.freeze({
+	PetProgression = {MaxLevel = 10, BaseXP = 40, StepXP = 20, NormalXP = 4, EliteXP = 12, BossXP = 30, DamageEveryLevels = 2,
+		MaxXP = 1080, BonusThresholds = {100, 280, 540, 880}},
+	EliteEligibility = {MinHits = 2, DamageFraction = 0.01},
+	Elites = {
+		frost_warden = {Name = "Buzul Devriyesi", RegionId = "frost", X = -760, Z = -1155, MaxHealth = 900, Damage = 28,
+			Kind = "area", Radius = 14, MaxVertical = 10, Windup = 1.5, Cooldown = 9, Respawn = 90, XP = 160, Gold = 15, MaterialAmount = 3},
+		desert_sentinel = {Name = "Kum Mızrağı", RegionId = "desert", X = 790, Z = -1125, MaxHealth = 1100, Damage = 32,
+			Kind = "targeted", Radius = 12, MaxVertical = 10, Windup = 1.2, Cooldown = 8, Respawn = 90, XP = 220, Gold = 20, MaterialAmount = 3},
+	},
 	MapBounds = {MinX = -1500, MaxX = 1500, MinZ = -1900, MaxZ = 500},
 	Party = {MaxMembers = 4, InviteDuration = 30, RewardRadius = 100, AssistXPFactor = 0.7},
 	Travel = {SourceRange = 16, CombatLock = 10, ChannelDuration = 3, MaxChannelMovement = 3},

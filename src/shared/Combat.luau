@@ -8,10 +8,16 @@ function Combat.stats(profile, config)
 	local class = config.Classes[classId]
 	local equipment = config.Equipment[profile.equipmentTier]
 	local pet = if type(profile.equippedPet) == "string" and profile.pets[profile.equippedPet] == true then config.Pets[profile.equippedPet] else nil
+	local petBonus = if pet then pet.DamageBonus else 0
+	if pet then
+		local xp = if type(profile.petXP) == "table" then profile.petXP[profile.equippedPet] else 0
+		xp = if finite(xp) then math.clamp(xp, 0, config.PetProgression.MaxXP) else 0
+		for _, threshold in config.PetProgression.BonusThresholds do if xp >= threshold then petBonus += 1 end end
+	end
 	local level = if finite(profile.level) then math.clamp(math.floor(profile.level), 1, 10000) else 1
 	return {classId = classId, maxHealth = class.MaxHealth + (if equipment then equipment.HealthBonus else 0),
 		basicRange = class.BasicRange, basicDamage = class.BasicDamage + math.min(30, level - 1) * 2
-			+ (if equipment then equipment.DamageBonus else 0) + (if pet then pet.DamageBonus else 0)}
+			+ (if equipment then equipment.DamageBonus else 0) + petBonus}
 end
 function Combat.newRuntime(now)
 	assert(finite(now) and now >= 0, "finite nonnegative server time required")

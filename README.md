@@ -14,6 +14,7 @@ Roblox için fantastik açık dünya MMORPG prototipi. Güvenli köyden yollarla
 6. Boss takvimini izle, haritadaki ◆ işaretine git ve diğer oyuncularla bossu yen. **P** ile pet koleksiyonunu açıp kazandığın peti tak.
 7. **C** ile karakterini aç: köyde sınıf seç, sefer ödüllerini al ve Borin'in yanında donanımını yükselt. **Q/R** aktif yeteneklerindir.
 8. **G** ile arkadaşlarını dört kişilik gruba davet et. Bir türbenin yanına gidip **E** ile keşfet; **M** haritasından keşfettiğin başka bir türbeye seyahat et.
+9. Kazandığın peti kuşanarak eğit. Buzul ve çöldeki **▲ elit** işaretlerinden ek savaş ödülleri kazan; saldırı öncesi zeminde beliren alandan kaç.
 
 GitHub üzerinde **Actions → Validate and build Roblox place** iş akışı, her push için kontrolleri ve oyun derlemesini çalıştırır. Başarılı çalışmanın **Aetheria-place** çıktısını indirip ZIP içindeki `Aetheria.rbxlx` dosyasını Studio'da açabilirsin. Bu iş akışı oyunu Roblox'a yayımlamaz.
 
@@ -47,11 +48,26 @@ Yayınlanmış oyunda bosslar gerçek UTC saatine göre çıkar, 10 dakika kalı
 
 Her oyuncu en az **3 kabul edilmiş vuruş** ve bossun toplam canının **%1'i kadar hasar** ile kişisel ödüle hak kazanır. Son vuruşu yapan oyuncu bütün ganimeti almaz. Her uygun zaferde ilgili petin düşme şansı **%3**; aynı boss için art arda 29 başarısız düşüşün ardından **30. uygun zafer garantidir**. Başarılı pet düşüşü o bossun sayacını sıfırlar. Kopya pet 10 yıldız tozuna dönüşür. Takvime, hasara, rastgeleliğe ve ödüle sunucu karar verir.
 
-Tek pet kuşanılır. Üç pet de eşit **+4 saldırı hasarı** verir; yaprak, yüzgeç ve boynuz görselleriyle oyuncuyu takip eder. Petler yalnız boss ödülünden açılır; para veya API anahtarıyla satın alma yoktur. Aynı global boss zaman diliminden yeniden ödül alınmasını önleyen kayıt, pet koleksiyonu ve garanti sayaçlarıyla birlikte saklanır.
+Tek pet kuşanılır. Üç pet de **+4 saldırı hasarıyla** başlar, aynı eğitim eğrisiyle **+8** hasara kadar gelişir; yaprak, yüzgeç ve boynuz görselleriyle oyuncuyu takip eder. Petler yalnız boss ödülünden açılır; para veya API anahtarıyla satın alma yoktur. Aynı global boss zaman diliminden yeniden ödül alınmasını önleyen kayıt, pet koleksiyonu ve garanti sayaçlarıyla birlikte saklanır.
 
 **Studio demo takvimi:** İlk boss Play'den yaklaşık 20 saniye sonra çıkar; sonraki bosslar 200 ve 380. saniyelerdedir. Döngü 180 saniyelik aralıklarla sürer. Bosslar 120 saniye kalır, canları normalin %30'udur. Bu hızlandırma yalnız Studio'da geçerlidir; pet şansı yine %3'tür. Demo olduğu HUD'da açıkça gösterilir. İlk petin her denemede düşmesi beklenmemelidir.
 
 MMO örnekleri, kaynakların sınırları ve tasarım kararları: [docs/MMO_DESIGN.md](docs/MMO_DESIGN.md).
+
+## Pet eğitimi ve elit karşılaşmalar
+
+Yalnız **kuşanılmış ve sahip olunan pet** deneyim kazanır. Normal yaratık ödülü veya normal grup desteği **4 pet XP**, uygun kişisel boss ödülü **30 pet XP** verir. Elitte kişisel katılım **12**, grup desteği **4 pet XP** verir. Görev teslimi, kaynak toplama, peti takıp çıkarma ve aynı boss ödülünü tekrar istemek pet XP kazandırmaz.
+
+Petler en fazla **10. seviyeye**, toplam **1.080 XP** ile ulaşır. Bir sonraki seviye için önce 40, ardından 60, 80…200 XP gerekir. Hasar katkısı 3/5/7/9. seviyelerde +5/+6/+7/+8 olur; 10. seviyede +8 kalır. P paneli seviye, XP çubuğu ve güncel hasar katkısını gösterir. Görsel boyutu kademeli büyür; 3. ve 7. seviyelerde rün halkaları gelişir. Üç petin güç eğrisi aynıdır. Kuşanılmayan petin deneyimi korunur, fakat artmaz.
+
+| Elit | Konum | Can | Kaçınılacak saldırı | Kişisel ödül |
+|---|---|---:|---|---|
+| Buzul Devriyesi | Buzul Çamlığı, güney arenası | 900 | Kendi çevresinde 14 stud patlama; 1,5 sn uyarı | 160 XP, 15 altın, 3 demir, 12 pet XP |
+| Kum Mızrağı | Güneş Kırığı Çölü, güney arenası | 1.100 | Oyuncunun ilk konumunda 12 stud alan; 1,2 sn uyarı | 220 XP, 20 altın, 3 köz, 12 pet XP |
+
+Elitler sunucu başlangıcında bulunur, yenilince **90 saniyede** yeniden doğar. Kişisel ödül için en az **2 kabul edilmiş isabet**, toplam canın **%1'i kadar hasar**, hayatta olmak ve ölüm noktasının **120 stud** yakınında bulunmak gerekir. Uygun oyuncunun aynı gruptaki canlı ve güvenilir **100 stud** yakınındaki üyeleri %70 XP, bir bölge malzemesi ve 4 pet XP destek ödülü alır. Kişisel hak ve birden fazla grup desteği üst üste ödül vermez. Uygun sefer ilerlemesi bir yaratık sayılır.
+
+Elitler **pet düşürmez**; nadir petler mevcut üç world bosstan kazanılır. Elit 130 stud dışına çekilirse canı ve katkıları sıfırlanır; eski saldırısı iptal olur. Haritanın aşağı kaydırılan bölümünde elit canı, saldırı hazırlığı ve yeniden doğma süresi görünür.
 
 ## Sınıflar, yetenekler ve donanım
 
@@ -62,7 +78,7 @@ Yeni karakter **Savaşçı** olarak başlar. **C → Karakter** panelinden güve
 | Savaşçı | 140 / 11 stud | Geniş Darbe: yakındaki en fazla 3 hedef, 25 enerji, 6 sn | İkinci Nefes: 35 can iyileştirme, 30 enerji, 14 sn |
 | Büyücü | 100 / 32 stud | Aether Oku: 48 stud içindeki hedef, 25 enerji, 4 sn | Yıldız Halkası: 17 stud içinde en fazla 3 hedef, 40 enerji, 9 sn |
 
-Enerji en fazla **100**, yenilenme saniyede **8**'dir. Temel saldırı enerji harcamaz. Geçerli hedef yoksa, hedef duvar arkasındaysa veya iyileştirmede can zaten doluysa yetenek enerji/bekleme süresi tüketmez. Hasar, enerji, hedef görüş hattı ve zamanlar sunucuda doğrulanır. Kılıç darbesi, büyü ışını, alan halkası ve iyileştirme görselleri yalnız sunucunun kabul ettiği eylemlerde gösterilir.
+Enerji en fazla **100**, yenilenme saniyede **8**'dir. Temel saldırı enerji harcamaz. Geçerli hedef yoksa, hedef duvar arkasındaysa veya iyileştirmede can zaten doluysa yetenek enerji/bekleme süresi tüketmez. Hasar, enerji, hedef görüş hattı ve zamanlar sunucuda doğrulanır. Kılıç darbesi, büyü ışını, alan halkası ve iyileştirme görselleri yalnız sunucunun kabul ettiği eylemlerde gösterilir. Vuruş ve iyileştirme sayıları, ilgili oyuncuya sunucunun kabul ettiği miktarı gösterir; kalan canı aşan vuruşlar kalan can kadar gösterilir.
 
 **Sefer günlüğü**, Eldrin'in tekrarlanan 3 yaratık görevinden ayrıdır. Sırayla **5 orman → 5 bataklık → 5 köz yaratığı → 1 uygun katılımlı world boss → 8 buzul → 8 çöl yaratığı** ister. Her aşamanın ödülünü C panelinden alarak bir sonraki aşamayı açarsın; daha erken yapılan sonraki bölge öldürmeleri geriye dönük sayılmaz. Her aşama bir kez ödül verir. İlk üç seferin altın/malzeme ödülleri, ilgili sıradaki donanım tarifini karşılar. Eski dört aşamalı seferi bitiren karakterler beşinci aşamadan devam eder.
 
@@ -100,7 +116,9 @@ bash scripts/check.sh
 
 Kurulum, resmi GitHub sürümlerinden **Rojo 7.7.1** ve **Luau 0.743** indirir; yayınlanan SHA-256 değerlerini doğruladıktan sonra `/workspace/.tools/aetheria/bin` altına kurar. Tekrar çalıştırma doğrulanmış indirme önbelleğini kullanır. Farklı araç konumu için `AETHERIA_TOOLS_DIR` değişkeni desteklenir. Python'un TLS doğrulaması açık kalır; checksum uyuşmazlığı kurulumu durdurur.
 
-`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler, Roblox'a bağlı olmayan ortak mantıkta tür analizini ve dört test paketini çalıştırır, ardından Studio oyun dosyasını üretir. İlerleme paketinde 34, boss/pet paketinde 166, savaş/sefer/üretim paketinde 143, grup/seyahat/dünya paketinde 185 doğrulama vardır (toplam 528). Server/client dosyalarının Roblox API türleri bu bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
+`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler ve Roblox'a bağlı olmayan ortak mantıkta tür analizi yapar. Beş saf Luau paketinde ilerleme 34, boss/pet 166, savaş/sefer/üretim 143, grup/seyahat/dünya 185, pet eğitimi/elit kuralları 179 doğrulama vardır (toplam 707).
+
+Ardından `scripts/test-roblox-mocks.py`, **gerçek EliteService kaynak kodunu** sınırlı Roblox taklitleriyle çalıştırır: gecikmiş saldırı iptali, tek ödül, grup paylaşımı, ölüm, yeniden doğma ve gerçek can azalmasına göre hasar sayımı denetlenir. Bu testler Roblox fiziğini, ağını veya streaming'i çalıştırmaz. Son olarak Rojo Studio dosyasını üretir; `scripts/verify-export.py`, bütün kaynakların ve Script/LocalScript/ModuleScript türlerinin dışa aktarımda güncel olduğunu doğrular. Server/client dosyalarının Roblox API türleri bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
 
 ### Windows: GitHub deposunu Roblox Studio'ya bağla
 
@@ -169,7 +187,8 @@ Bulutta çalışan Rojo sunucusuna bilgisayarındaki Studio'nun doğrudan erişe
 - `src/server/PartyService.luau`: oturum grupları, davetler ve yakındaki üyelerin ödül paylaşımı.
 - `src/server/TravelService.luau`: türbe keşfi, savaş/hareket kontrolü ve güvenli seyahat.
 - `src/server/ProfileStore.luau`: Studio oturum verisi ve yayınlanmış deneyimde DataStore kayıtları.
-- `src/shared/`: ayarlar, saf takvim, pet/ödül/savaş/üretim/sefer/grup/seyahat kuralları ve v4 profil geçişi.
+- `src/server/EliteService.luau`: elit saldırıları, katkı ve grup ödülleri, yeniden doğma ve saldırı iptalleri.
+- `src/shared/`: ayarlar, saf takvim, pet eğitimi/ödül/savaş/üretim/sefer/grup/seyahat kuralları ve v5 profil geçişi.
 - `src/client/`: Türkçe HUD, karakter/grup paneli, yetenek çubuğu, savaş efektleri, biyom renk geçişleri, pet koleksiyonu, boss takvimi ve seyahat haritası.
 - `tests/`: otomatik ilerleme testleri ve Studio kontrol planı.
 
@@ -177,7 +196,7 @@ Bulutta çalışan Rojo sunucusuna bilgisayarındaki Studio'nun doğrudan erişe
 
 Studio'da kayıtlar bilinçli olarak **geçicidir**; API Services ayarını açmak bunu değiştirmez. Play oturumu yeniden başladığında yeni profil oluşturulur. Yayınlanmış deneyimde Roblox `DataStoreService` kullanılır; harici sunucu veya sohbetten paylaşılacak bir anahtar gerekmez. Kayıt yüklenemiyorsa oyuncu kabul edilmez; boş profil ile mevcut kayıt ezilmez. Kayıt sırasında oturum kilidi ve periyodik kaydetme kullanılır.
 
-Eski v1/v2/v3 kayıtlarının seviye, XP, altın, görev, kristal, petler, garanti sayaçları, sınıfı, donanımı, malzemeleri ve sefer ilerlemesi korunur. **Profil v4** keşfedilen türbeleri ekler; köy her zaman açıktır. Aynı `AetheriaProfiles_v1` DataStore adı kullanılır; geçiş için eski kayıtlar silinmez. İç içe koleksiyonlar kaydetme sırasında bağımsız kopyalanır. Enerji, yetenek bekleme süreleri, grup ve devam eden seyahat yalnız çalışan sunucunun oturum durumudur; aynı oturumda yeniden doğma/sınıf değişimi enerji/bekleme süresini sıfırlamaz.
+Eski v1-v4 kayıtlarının seviye, XP, altın, görev, kristal, petler, garanti sayaçları, sınıfı, donanımı, malzemeleri, sefer ilerlemesi ve keşfedilen türbeleri korunur. **Profil v5**, sahip olunan petlerin toplam eğitim XP'sini ekler; eski petler sıfır eğitim XP'siyle başlar. Köy her zaman açıktır. Aynı `AetheriaProfiles_v1` DataStore adı kullanılır; geçiş için eski kayıtlar silinmez. İç içe koleksiyonlar kaydetme sırasında bağımsız kopyalanır. Enerji, yetenek bekleme süreleri, grup ve devam eden seyahat yalnız çalışan sunucunun oturum durumudur; aynı oturumda yeniden doğma/sınıf değişimi enerji/bekleme süresini sıfırlamaz.
 
 Studio'nun çoklu istemci testinden dört oyuncu başlatıp grup, görev paylaşımı, ölüm/yeniden doğma, boss katılımı ve türbe seyahatini kontrol et. Kalıcılığı ayrı, yayınlanmış özel bir test deneyiminde çıkıp tekrar girerek doğrula. Ayrıntılı kontrol listesi: [tests/MANUAL.md](tests/MANUAL.md).
 

@@ -71,15 +71,23 @@ function BossService:spawn(slot)
 end
 
 function BossService:damage(model, player, amount)
+	if type(amount) ~= "number" or amount ~= amount or amount <= 0 or amount == math.huge then return 0 end
 	local current = self.targets[model]
-	if not current or current.status ~= "alive" or os.time() >= current.endsAt then return end
-	local accepted = math.min(amount, math.max(0, current.humanoid.Health))
-	if accepted <= 0 then return end
+	if not current or current.status ~= "alive" or not model.Parent or not current.humanoid.Parent
+		or not self.callbacks.profiles[player] or self.closed or self.current ~= current or os.time() >= current.endsAt then return 0 end
+	local before = current.humanoid.Health
+	local accepted = math.min(amount, math.max(0, before))
+	if accepted <= 0 then return 0 end
 	local contribution = current.participants[player] or {damage = 0, hits = 0}
+	-- Credit before TakeDamage so a lethal hit is visible to the death callback.
 	contribution.damage += accepted
 	contribution.hits += 1
 	current.participants[player] = contribution
 	current.humanoid:TakeDamage(accepted)
+	local actual = math.clamp(before - current.humanoid.Health, 0, accepted)
+	contribution.damage -= accepted - actual
+	if actual == 0 then contribution.hits -= 1 end
+	return actual
 end
 
 function BossService:update()
@@ -128,7 +136,8 @@ function BossService:update()
 		World.createTelegraph(center, radius, delaySeconds)
 		local generation = current.generation
 		task.delay(delaySeconds, function()
-			if self.closed or self.current ~= current or current.status ~= "alive" or generation ~= current.generation or os.time() >= current.endsAt then return end
+			if self.closed or self.current ~= current or current.status ~= "alive" or generation ~= current.generation or os.time() >= current.endsAt
+			or current.humanoid.Health <= 0 or not current.humanoid.Parent or not current.root.Parent or not current.model.Parent then return end
 			for player in self.callbacks.profiles do
 				local playerRoot, playerHumanoid = self.callbacks.living(player)
 				if playerRoot and not self.callbacks.safe(playerRoot.Position) and (playerRoot.Position - center).Magnitude <= radius then

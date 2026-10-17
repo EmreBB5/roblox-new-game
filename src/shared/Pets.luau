@@ -20,7 +20,13 @@ function Pets.equip(profile, petId, config)
 end
 function Pets.damageBonus(profile, config)
 	local id = profile.equippedPet
-	if type(id) == "string" and config.Pets[id] and profile.pets[id] == true then return config.Pets[id].DamageBonus end
+	if type(id) == "string" and config.Pets[id] and profile.pets[id] == true then
+		local xp = if type(profile.petXP) == "table" then profile.petXP[id] else 0
+		xp = if finite(xp) then math.clamp(xp, 0, config.PetProgression.MaxXP) else 0
+		local bonus = config.Pets[id].DamageBonus
+		for _, threshold in config.PetProgression.BonusThresholds do if xp >= threshold then bonus += 1 end end
+		return bonus
+	end
 	return 0
 end
 function Pets.claim(profile, bossId, occurrence, damage, hits, maxHP, roll, config)

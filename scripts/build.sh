@@ -4,3 +4,4 @@ cd "$(dirname "$0")/.."
 export PATH="${AETHERIA_TOOLS_DIR:-/workspace/.tools/aetheria}/bin:$PATH"
 mkdir -p build
 rojo build default.project.json --output build/Aetheria.rbxlx
+python3 scripts/verify-export.py build/Aetheria.rbxlx

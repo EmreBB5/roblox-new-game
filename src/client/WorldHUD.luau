@@ -3,6 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("GameConfig"))
 local WorldMap = require(game:GetService("ReplicatedStorage").Shared:WaitForChild("WorldMap"))
+local PetGrowth = require(game:GetService("ReplicatedStorage").Shared:WaitForChild("PetGrowth"))
 local WorldHUD = {}
 
 function WorldHUD.create(gui, remotes, make, label, colors)
@@ -39,7 +40,12 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	local map = make("Frame", {BackgroundColor3 = Color3.fromRGB(26, 46, 40), BorderSizePixel = 0, Size = UDim2.new(1, -6, 0, 220), Position = UDim2.fromOffset(0, 0), ClipsDescendants = true}, mapPanel)
 	make("UICorner", {CornerRadius = UDim.new(0, 10)}, map)
 	local mapHint = label(mapPanel, "", UDim2.fromOffset(2, 414), UDim2.new(1, -12, 0, 64), 12, colors.muted)
-	mapPanel.CanvasSize = UDim2.fromOffset(0, 488)
+	label(mapPanel, "SEÇKİN DEVRİYELER • Pet düşürmez", UDim2.fromOffset(2, 486), UDim2.new(1, -12, 0, 32), 13, colors.gold)
+	local eliteLabels = {}
+	for index, id in ipairs({"frost_warden", "desert_sentinel"}) do
+		eliteLabels[id] = label(mapPanel, "", UDim2.fromOffset(2, 522 + (index - 1) * 76), UDim2.new(1, -12, 0, 72), 12, colors.muted)
+	end
+	mapPanel.CanvasSize = UDim2.fromOffset(0, 680)
 	local selectedMenu, previousSelection, closeButton = "pets", nil, nil
 	local function show(mode, force)
 		local wasOpen = self.open
@@ -71,18 +77,23 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	local cards = {}
 	for index, bossId in ipairs(order) do
 		local boss, petId = Config.Bosses[bossId], Config.Bosses[bossId].PetId
-		local card = frame(collection, UDim2.new(1, -6, 0, 104), UDim2.fromOffset(0, (index - 1) * 112))
+		local card = frame(collection, UDim2.new(1, -6, 0, 154), UDim2.fromOffset(0, (index - 1) * 164))
 		label(card, Config.Pets[petId].Name, UDim2.fromOffset(10, 4), UDim2.new(1, -20, 0, 24), 15, colors.gold)
 		local detail = label(card, "", UDim2.fromOffset(10, 30), UDim2.new(1, -112, 0, 68), 11, colors.muted)
+		local xpText = label(card, "", UDim2.fromOffset(10, 105), UDim2.new(1, -20, 0, 24), 11, colors.muted)
+		local xpTrack = make("Frame", {Position = UDim2.fromOffset(10, 134), Size = UDim2.new(1, -20, 0, 7), BackgroundColor3 = Color3.fromRGB(42, 57, 51), BorderSizePixel = 0, ClipsDescendants = true}, card)
+		make("UICorner", {CornerRadius = UDim.new(1, 0)}, xpTrack)
+		local xpFill = make("Frame", {Size = UDim2.fromScale(0, 1), BackgroundColor3 = colors.xp, BorderSizePixel = 0}, xpTrack)
+		make("UICorner", {CornerRadius = UDim.new(1, 0)}, xpFill)
 		local equip = button(card, "KİLİTLİ", UDim2.new(1, -96, 0, 42), UDim2.fromOffset(86, 44), function()
 			if not (self.state.pets or {})[petId] then return end
 			remotes:WaitForChild("EquipPet"):FireServer(self.state.equippedPet == petId and "" or petId)
 		end)
-		cards[petId] = {detail = detail, equip = equip, bossId = bossId}
+		cards[petId] = {detail = detail, equip = equip, bossId = bossId, xpText = xpText, xpFill = xpFill}
 	end
 	local dropPercent = math.floor(Config.PetDropChance * 100 + 0.5)
-	label(collection, string.format("Uygun zaferde %%%d şans • %d. denemede garanti\nKatılım: en az %d isabet ve boss canının %%%d'i kadar hasar.\nAynı anda yalnızca bir pet takılır.", dropPercent, Config.PetPityLimit, Config.BossMinAcceptedHits, math.floor(Config.BossMinDamageFraction * 100 + 0.5)), UDim2.fromOffset(4, 338), UDim2.new(1, -12, 0, 92), 12, colors.muted)
-	collection.CanvasSize = UDim2.fromOffset(0, 438)
+	label(collection, string.format("Uygun boss zaferinde %%%d şans • %d. denemede garanti\nKatılım: en az %d isabet ve boss canının %%%d'i kadar hasar.\nYalnızca takılı pet XP kazanır: normal +%d, seçkin +%d, boss +%d.\nSeçkinler pet düşürmez. Tüm petler aynı gelişim gücüne sahiptir.", dropPercent, Config.PetPityLimit, Config.BossMinAcceptedHits, math.floor(Config.BossMinDamageFraction * 100 + 0.5), Config.PetProgression.NormalXP, Config.PetProgression.EliteXP, Config.PetProgression.BossXP), UDim2.fromOffset(4, 496), UDim2.new(1, -12, 0, 142), 12, colors.muted)
+	collection.CanvasSize = UDim2.fromOffset(0, 646)
 	local function mapPosition(x, z)
 		local u, v = WorldMap.normalized(x, z, Config)
 		return UDim2.fromScale(u or 0.5, v or 0.5)
@@ -99,6 +110,12 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	local village = label(map, "GÜVENLİ KÖY", mapPosition(0, 85), UDim2.fromOffset(100, 24), 10, colors.gold)
 	village.AnchorPoint, village.TextXAlignment = Vector2.new(0.5, 0), Enum.TextXAlignment.Center
 	local markers, waypointMarkers, travelButtons = {}, {}, {}
+	local eliteMarkers = {}
+	for id, definition in pairs(Config.Elites) do
+		local marker = label(map, "▲", mapPosition(definition.X, definition.Z), UDim2.fromOffset(22, 22), 19, Color3.fromRGB(255, 167, 127))
+		marker.AnchorPoint, marker.TextXAlignment = Vector2.new(0.5, 0.5), Enum.TextXAlignment.Center
+		eliteMarkers[id] = marker
+	end
 	for _, id in ipairs(order) do
 		local marker = label(map, "◆", mapPosition(Config.Bosses[id].X, Config.Bosses[id].Z), UDim2.fromOffset(22, 22), 20, colors.gold)
 		marker.AnchorPoint, marker.TextXAlignment = Vector2.new(0.5, 0.5), Enum.TextXAlignment.Center
@@ -118,7 +135,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	end
 	local playerMarker = label(map, "●", UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(22, 22), 20, Color3.new(1, 1, 1))
 	playerMarker.AnchorPoint, playerMarker.TextXAlignment = Vector2.new(0.5, 0.5), Enum.TextXAlignment.Center
-	label(map, "Kuzey ↑   ◆ Boss   ◇ Türbe   ● Sen", UDim2.fromOffset(6, 2), UDim2.new(1, -12, 0, 20), 10, colors.muted)
+	label(map, "↑ Kuzey   ◆ Boss   ▲ Seçkin   ◇ Türbe   ● Sen", UDim2.fromOffset(6, 2), UDim2.new(1, -12, 0, 20), 9, colors.muted)
 	local function setZ()
 		for _, item in ipairs(content:GetDescendants()) do if item:IsA("GuiObject") then item.ZIndex = 7 end end
 	end
@@ -130,7 +147,17 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 			local owned = (state.pets or {})[id] == true
 			card.equip.Text = state.equippedPet == id and "ÇIKAR" or (owned and "TAK" or "KİLİTLİ")
 			card.equip.Selectable, card.equip.AutoButtonColor = owned, owned
-			card.detail.Text = string.format("%s • +%d hasar\n%s\nGaranti %d / %d", Config.Bosses[card.bossId].Name, Config.Pets[id].DamageBonus, owned and "Koleksiyonunda" or ("%" .. dropPercent .. " nadir düşüş"), (state.petPity or {})[card.bossId] or 0, Config.PetPityLimit)
+			local info = owned and ((state.petStats or {})[id] or PetGrowth.info(state, id, Config))
+			local bonus = info and info.bonus or Config.Pets[id].DamageBonus
+			card.detail.Text = string.format("%s • +%d hasar\n%s\nGaranti %d / %d", Config.Bosses[card.bossId].Name, bonus, owned and "Koleksiyonunda" or ("%" .. dropPercent .. " nadir düşüş"), (state.petPity or {})[card.bossId] or 0, Config.PetPityLimit)
+			if info then
+				local capped = info.level >= Config.PetProgression.MaxLevel
+				card.xpText.Text = capped and ("Sv. " .. info.level .. " • En yüksek seviye") or string.format("Sv. %d / %d • XP %d / %d", info.level, Config.PetProgression.MaxLevel, info.xp, info.xpNeeded)
+				card.xpFill.Size = UDim2.fromScale(capped and 1 or math.clamp(info.xp / math.max(1, info.xpNeeded), 0, 1), 1)
+			else
+				card.xpText.Text = "Kilitli • Önce boss ödülünden kazan"
+				card.xpFill.Size = UDim2.fromScale(0, 1)
+			end
 		end
 	end
 	function self:resize(viewport)
@@ -203,6 +230,25 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 			local channel = self.state.travel
 			mapHint.Text = channel and string.format("%s • %.1f sn\nHareket etmek veya savaşmak seyahati iptal eder.", (Config.Waypoints[channel.destination] or {}).Name or "Seyahat", math.max(0, channel.endsAt - now))
 				or (atShrine and "Keşfedilmiş bir hedef seç. Savaş dışında 10 sn bekle; 3 sn boyunca hareketsiz kal." or "Türbelere yürüyüp E ile keşfet. Seyahat etmek için bir türbenin 16 stud yakınına gel.")
+			local eliteStates = {}
+			for _, elite in ipairs(world.elites or {}) do eliteStates[elite.id] = elite end
+			for id, text in pairs(eliteLabels) do
+				local definition = Config.Elites[id]
+				local elite = eliteStates[id]
+				local status = "Bölgeyi keşfet • Pet düşürmez"
+				if elite then
+					if elite.status == "defeated" then
+						status = "Yeniden doğuş: " .. timeText((elite.respawnAt or now) - now)
+					else
+						status = string.format("Can %d / %d", math.ceil(elite.health or 0), math.ceil(elite.maxHealth or 1))
+						if (elite.telegraphEndsAt or 0) > now then status ..= " • SALDIRI HAZIRLIĞI" end
+					end
+					eliteMarkers[id].TextColor3 = elite.status == "alive" and Color3.fromRGB(255, 167, 127) or colors.muted
+					eliteMarkers[id].Position = mapPosition(elite.x or definition.X, elite.z or definition.Z)
+				end
+				local tactic = id == "frost_warden" and "Alan uyarısından uzaklaş." or "İşaretlenen konumdan çık."
+				text.Text = definition.Name .. "\n" .. status .. "\n" .. tactic
+			end
 			for _, boss in ipairs(world.bosses or {}) do
 				local line, cfg = eventLabels[boss.id], Config.Bosses[boss.id]
 				if line and cfg then

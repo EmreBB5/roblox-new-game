@@ -1,5 +1,6 @@
 /build/
 /.tools/
+__pycache__/
 *.rbxl.lock
 *.rbxlx.lock
 *.rbxl

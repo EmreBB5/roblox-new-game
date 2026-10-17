@@ -10,4 +10,5 @@ luau-analyze src/shared/*.luau tests/*.luau
 for suite in tests/*.spec.luau; do
   luau "$suite"
 done
+python3 scripts/test-roblox-mocks.py
 bash scripts/build.sh

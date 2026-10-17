@@ -72,3 +72,15 @@ Dünya alanı 2,5 katına, 3.000×2.400 stud'a çıkarıldı. Tek dev zemin yeri
 Karlı çamlar, buz sütunları ve donmuş göl; kaktüsler, kumtaşı sütunları ve vaha ile görsel fark oluşturur. Bölge adı ve önerilen seviye HUD'a yansır, yerel renk geçişi sadece bakan oyuncuyu etkiler. Rastgele dekorlar yol koridorlarından ve türbelerden uzak tutulur. Küçük seyahat platformları Persistent streaming modeli kullanır; uzak zeminin yüklenmesi sırasında varış noktasında bir taban bırakır.
 
 Seferin beşinci ve altıncı aşaması sekizer yeni bölge yaratığı ister. Önceki sürümün tamamlanmış işareti olan aşama 5, artık yeni seferin başlangıcıdır; eski ödüller tekrar alınmaz. Yeni düğümler mevcut demir ve köz stoklarını kullanır. Pet düşüren bosslar üç mevcut karşılaşmada kalır; yeni boss veya pet eklenmiş gibi gösterilmez. Canlı sunucu performansı ve fizik doğrulaması Studio/yayınlanmış test gerektirir.
+
+## Pet eğitimi ve bölgesel elitler
+
+Petler, kazanıldıktan sonra da savaş döngüsünde gelişir. Kuşanılmış ve sahip olunan pet normal öldürmeden 4, kişisel elit ödülünden 12, kişisel boss ödülünden 30 XP alır. Grup elit desteği 4 pet XP verir. Birikimli XP, kayda yazılan tek eğitim değeridir; seviye ve hasar aynı eğriden türetilir. Tüm petler toplam 1.080 XP ile 10. seviyeye, 3/5/7/9. seviyelerde artan bonusla +8 hasara ulaşır. Görsel büyüme ve rünler kozmetiktir. Profil v5 yalnız sahip olunan petlerin XP alanlarını saklar; eski kayıtların eğitim XP'si sıfırdır.
+
+Yeni bölgeler Buzul Devriyesi ve Kum Mızrağı elitlerini barındırır. Buzul saldırısı elitin çevresinde, çöl saldırısı seçilen oyuncunun başlangıç konumunda hazırlanır. Her iki alan da önceden işaretlenir. Gerçek konum, görüş hattı, güvenli bölge ve hareket güveni sunucu tarafından kontrol edilir. Saldırı başındaki merkez daha sonra oyuncuyu izlemez; kaçmak mümkündür.
+
+Elit ödülleri iki kabul edilmiş isabet ve %1 hasar veren, canlı ve ölüm noktasından 120 stud içindeki oyunculara verilir. Sonra bu kişilerin uygun yakın grup üyeleri destek kümesine eklenir. Bir oyuncu hem kişisel hem destek adayıysa kişisel ödül üstün gelir; ortak küme aynı oyuncuya iki kez ödül vermez. Elitler pet düşürmez, boss garanti sayacını değiştirmez. Bu yaklaşım, bossların kişisel nadir koleksiyon döngüsünü korur.
+
+Ölüm, geri çekilme, yeni karşılaşma ve kapanış saldırı neslini geçersiz kılar. Her gecikmiş saldırı karşılaşma kimliği/nesil/tek kullanım kontrolünden geçer. Yeniden doğuş 90 saniyedir. Birlikte testte bu servis akışı taklit ortamında denetlenebilir; Roblox fizik ve streaming sonucu olarak sunulmaz. Studio kontrol planı bu ayrımı korur.
+
+Sunucunun kabul ettiği gerçek can azalması ve iyileştirme, eylemi yapan oyuncuya kısa süreli sayılarla gösterilir. Bu sayılar hasar isteği üretmez. Örneğin 2 canı kalmış hedefe 40 hasarlık vuruş 2 olarak görünür. Derleme sonrasında XML'deki tüm kaynaklar ve Script/LocalScript/ModuleScript türleri dosyalarla karşılaştırılır; eksik veya eski kaynak içeren çıktı hata verir.

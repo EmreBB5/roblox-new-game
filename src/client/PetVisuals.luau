@@ -4,6 +4,10 @@ local RunService = game:GetService("RunService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("GameConfig"))
 local colors = { mossling = Color3.fromRGB(135, 231, 155), tidefin = Color3.fromRGB(112, 205, 244), embercub = Color3.fromRGB(255, 159, 94) }
 local PetVisuals = {}
+local function petLevel(value)
+	if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return 1 end
+	return math.clamp(math.floor(value), 1, Config.PetProgression.MaxLevel)
+end
 function PetVisuals.start()
 	local visuals = {}
 	local characters = {}
@@ -28,15 +32,17 @@ function PetVisuals.start()
 			local root = character and character:FindFirstChild("HumanoidRootPart")
 			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 			local id = player:GetAttribute("EquippedPet")
+			local level = petLevel(player:GetAttribute("PetLevel"))
 			if not root or not origin or not humanoid or humanoid.Health <= 0 or not colors[id] or (root.Position - origin.Position).Magnitude > 180 then
 				remove(player)
 			else
 				local visual = visuals[player]
-				if visual and (visual:GetAttribute("PetId") ~= id or characters[player] ~= character) then remove(player); visual = nil end
+				if visual and (visual:GetAttribute("PetId") ~= id or visual:GetAttribute("PetLevel") ~= level or characters[player] ~= character) then remove(player); visual = nil end
 				if not visual then
 					visual = Instance.new("Model")
 					visual.Name = Config.Pets[id].Name
 					visual:SetAttribute("PetId", id)
+					visual:SetAttribute("PetLevel", level)
 					characters[player] = character
 					for index = 1, 3 do
 						local part = Instance.new("Part")
@@ -60,11 +66,28 @@ function PetVisuals.start()
 						part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = true, false, false, false
 						part.CastShadow = false
 						part.Material = Enum.Material.Neon
-						part.Color = colors[id]
+						part.Color = colors[id]:Lerp(Color3.new(1, 1, 1), (level - 1) * 0.025)
 						part.CFrame = root.CFrame * offset
 						part.Parent = visual
 						if index == 1 then visual.PrimaryPart = part end
 					end
+					-- Level milestones add a segmented rune halo around the companion.
+					if level >= 3 then
+						local count = level >= 7 and 10 or 6
+						for index = 1, count do
+							local angle = index * math.pi * 2 / count
+							local rune = Instance.new("Part")
+							rune.Name = "GrowthRune"
+							rune.Anchored, rune.CanCollide, rune.CanQuery, rune.CanTouch = true, false, false, false
+							rune.CastShadow = false
+							rune.Material = Enum.Material.Neon
+							rune.Color = colors[id]:Lerp(Color3.fromRGB(255, 228, 159), 0.5)
+							rune.Size = Vector3.new(0.15, 0.12, 0.4)
+							rune.CFrame = root.CFrame * CFrame.new(math.cos(angle) * 1.1, -0.75, math.sin(angle) * 1.1) * CFrame.Angles(0, -angle, 0)
+							rune.Parent = visual
+						end
+					end
+					visual:ScaleTo(1 + (level - 1) * 0.04)
 					visual.Parent = folder
 					visual:PivotTo(root.CFrame * CFrame.new(3, 1.5, 2))
 					visuals[player] = visual
