@@ -1,0 +1,20 @@
+{
+  "name": "Aetheria",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Aetheria": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "AetheriaClient": { "$path": "src/client" }
+      }
+    },
+    "Workspace": {
+      "$properties": { "StreamingEnabled": false }
+    }
+  }
+}

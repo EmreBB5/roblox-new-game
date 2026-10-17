@@ -1,0 +1,64 @@
+local Progression = {}
+
+function Progression.xpNeeded(level: number): number
+	return 50 + (math.max(1, math.floor(level)) - 1) * 25
+end
+
+function Progression.addXP(level: number, xp: number, amount: number): (number, number)
+	xp += math.max(0, math.floor(amount))
+	while xp >= Progression.xpNeeded(level) do
+		xp -= Progression.xpNeeded(level)
+		level += 1
+	end
+	return level, xp
+end
+
+function Progression.newProfile()
+	return {version = 1, level = 1, xp = 0, gold = 0, kills = 0,
+		questStatus = "available", questKills = 0, hasCrystal = false}
+end
+
+function Progression.sanitize(raw: any)
+	local profile = Progression.newProfile()
+	if type(raw) ~= "table" then return profile end
+	for _, key in {"level", "xp", "gold", "kills", "questKills"} do
+		local value = raw[key]
+		if type(value) == "number" and value == value and math.abs(value) < 1e9 then
+			profile[key] = math.max(if key == "level" then 1 else 0, math.floor(value))
+		end
+	end
+	profile.level = math.min(profile.level, 10000)
+	profile.xp = math.min(profile.xp, Progression.xpNeeded(profile.level) - 1)
+	if raw.questStatus == "active" or raw.questStatus == "return" or raw.questStatus == "completed" then
+		profile.questStatus = raw.questStatus
+	end
+	profile.hasCrystal = raw.hasCrystal == true
+	return profile
+end
+
+function Progression.recordKill(profile, config)
+	profile.kills += 1
+	profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, config.KillXP)
+	if profile.questStatus == "active" then
+		profile.questKills = math.min(config.QuestTarget, profile.questKills + 1)
+		if profile.questKills >= config.QuestTarget then profile.questStatus = "return" end
+	end
+end
+
+-- Synchronous transition: repeated interactions cannot award the same turn-in twice.
+function Progression.interact(profile, config): string
+	if profile.questStatus == "return" then
+		profile.questStatus = "completed"
+		profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, config.QuestXP)
+		profile.gold += config.QuestGold
+		profile.hasCrystal = true
+		return "completed"
+	elseif profile.questStatus == "available" or profile.questStatus == "completed" then
+		profile.questKills = 0
+		profile.questStatus = "active"
+		return "started"
+	end
+	return "active"
+end
+
+return Progression
