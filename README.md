@@ -32,9 +32,23 @@ Kurulum, resmi GitHub sürümlerinden **Rojo 7.7.1** ve **Luau 0.743** indirir; 
 
 ### Windows: GitHub deposunu Roblox Studio'ya bağla
 
-Bu adımları **Roblox Studio'nun kurulu olduğu Windows bilgisayarında**, PowerShell ile uygula. Git yüklü değilse önce [resmi Windows kurulumunu](https://git-scm.com/download/win) tamamla ve yeni bir PowerShell penceresi aç.
+Bu adımları **Roblox Studio'nun kurulu olduğu Windows bilgisayarında** uygula. İlk yöntem Git gerektirmez.
+
+**En kolay yol: ZIP indir**
+
+1. [Hazır kaynak ZIP'ini indir](https://github.com/EmreBB5/roblox-new-game/archive/e486f004ff73688550b225b669c677f23b91cb2d.zip). Bu bağlantı `e486f004ff73688550b225b669c677f23b91cb2d` sürümüne sabittir.
+2. Dosya Gezgini'nde ZIP'e sağ tıkla → **Tümünü Ayıkla**. Kullanıcı klasörünün altında yeni bir klasör seç; mevcut proje dosyalarının üzerine ayıklama.
+3. Çıkarılan `roblox-new-game-e486f004ff73688550b225b669c677f23b91cb2d` klasörünü aç. **`scripts`, `src` ve `default.project.json` görünmeli.** ZIP'in içinden çalıştırma.
+4. Bu klasörde Dosya Gezgini'nin adres çubuğuna `powershell` yaz ve Enter'a bas. Aşağıdaki kurulum komutlarını bu pencerede çalıştır.
+
+`C:\Windows\System32` proje klasörü değildir; orada `scripts\studio.ps1` bulunmaz. Git kurulu değilse `git` komutlarını kullanma. İndirilen sabit ZIP'in SHA-256 değeri `db0f7bff1eac02218d2c65f3ec4d7a0cfec0067e54f31e8fbe5cc50cd6bacd35` olmalıdır; PowerShell'de `Get-FileHash` ile indirdiğin ZIP'i kontrol edebilirsin.
+
+**Alternatif: Git ile indir**
+
+Git kullanmak istersen [resmi Windows kurulumunu](https://git-scm.com/download/win) tamamla ve yeni bir PowerShell penceresi aç. Kaynakları kullanıcı klasörüne indir:
 
 ```powershell
+cd $env:USERPROFILE
 git clone https://github.com/EmreBB5/roblox-new-game.git
 cd roblox-new-game
 git switch codex/roblox-studio-setup
@@ -61,14 +75,16 @@ powershell -NoProfile -File .\scripts\studio.ps1
 
 Bu yerel bağlantı için script Roblox hesabı, parola veya API anahtarı istemez. GitHub deposunu indirmek ve bilgisayarındaki dosyaları Studio'ya eşitlemek, deneyimi Roblox'a yayınlamaz.
 
-**GitHub'daki yeni kodu almak için** önce Studio'da Play'i durdur, PowerShell'deki Rojo sunucusunu `Ctrl+C` ile kapat ve yerel dosya değişikliklerini commit ederek veya stash ile koru. Ardından depo klasöründe:
+**GitHub'daki yeni kodu almak için** önce Studio'da Play'i durdur ve PowerShell'deki Rojo sunucusunu `Ctrl+C` ile kapat. ZIP yöntemiyle başladıysan yeni sürümün ZIP'ini **ayrı bir klasöre** çıkar; eski klasörünü ve yerel değişikliklerini koru. Yeni klasördeki script ile yeniden başlat. Sabit ZIP bağlantısı her zaman yukarıdaki sürümü indirir; daha sonraki sürüm için yeni bağlantı gerekir.
+
+Git yöntemiyle başladıysan yerel dosya değişikliklerini commit ederek veya stash ile koru. Ardından depo klasöründe:
 
 ```powershell
 git pull --ff-only
 powershell -NoProfile -File .\scripts\studio.ps1
 ```
 
-Studio'daki Rojo bağlantısını gerekirse yeniden kur ve eşitleme değişikliklerini incele. Akış **GitHub → git pull → bilgisayarındaki dosyalar → Rojo → Studio** şeklindedir. Bilgisayardaki kaynak dosyalarını kaydettiğinde Rojo bağlı Studio'ya bunları aktarır; oyun davranışındaki değişiklikleri temiz bir Play oturumunda dene. **Studio içinde yaptığın düzenlemeler otomatik olarak Git dosyalarına veya GitHub'a dönmez.** Kaynak kod değişikliklerini yerel dosyalarda yapıp Git ile commit/push etmelisin.
+Studio'daki Rojo bağlantısını gerekirse yeniden kur ve eşitleme değişikliklerini incele. Akış **GitHub → ZIP indirme veya git pull → bilgisayarındaki dosyalar → Rojo → Studio** şeklindedir. Bilgisayardaki kaynak dosyalarını kaydettiğinde Rojo bağlı Studio'ya bunları aktarır; oyun davranışındaki değişiklikleri temiz bir Play oturumunda dene. **Studio içinde yaptığın düzenlemeler otomatik olarak Git dosyalarına veya GitHub'a dönmez.** Kaynak kod değişikliklerini yerel dosyalarda yap; GitHub'a göndermek için ayrıca Git ile commit/push veya GitHub'ın dosya yükleme arayüzünü kullan.
 
 Bulutta çalışan Rojo sunucusuna bilgisayarındaki Studio'nun doğrudan erişebildiği varsayılmaz; bu depo için bulut önizleme bağlantısı yoktur. İndirilmiş `.rbxlx` dosyasını açmak ise eşitleme sunucusu gerektirmez.
 
