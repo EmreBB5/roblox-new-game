@@ -5,13 +5,16 @@ local Progression = require(ReplicatedStorage.Shared.Progression)
 local ProfileStore = require(script.Parent.ProfileStore)
 local World = require(script.Parent.World)
 local Pets = require(ReplicatedStorage.Shared.Pets)
+local Combat = require(ReplicatedStorage.Shared.Combat)
+local Campaign = require(ReplicatedStorage.Shared.Campaign)
+local PlayerActions = require(script.Parent.PlayerActions)
 local BossService = require(script.Parent.BossService)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -26,16 +29,21 @@ local enemies = {}
 local closing = false
 local lastEquip = {}
 local bossService
+local actions
 
 local function state(player)
 	local handle = profiles[player]
 	if not handle or not player.Parent then return end
 	local p = handle.data
+	local resource, cooldowns = 100, {}
+	if actions then resource, cooldowns = actions:snapshot(player) end
 	remotes.State:FireClient(player, {
 		level = p.level, xp = p.xp, xpNeeded = Progression.xpNeeded(p.level),
 		gold = p.gold, kills = p.kills, questStatus = p.questStatus,
 		questKills = p.questKills, questTarget = Config.QuestTarget,
 		hasCrystal = p.hasCrystal, saveStatus = handle.status,
+		classId = p.classId, equipmentTier = p.equipmentTier, materials = table.clone(p.materials),
+		expedition = table.clone(p.expedition), resource = resource, cooldowns = cooldowns, stats = Combat.stats(p, Config),
 		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
 		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
 	})
@@ -70,6 +78,7 @@ end
 bossService = BossService.new(world, {
 	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
 	state = state, save = savePlayer,
+	eligible = function(player) Campaign.recordBoss(profiles[player].data, Config) end,
 	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
 	broadcast = function(message) remotes.Notify:FireAllClients(message) end,
 })
@@ -94,46 +103,28 @@ remotes.RequestState.OnServerEvent:Connect(function(player, ...)
 	remotes.WorldState:FireClient(player, bossService:snapshot())
 end)
 
+actions = PlayerActions.new(world, {
+	profiles = profiles, enemies = enemies, bosses = bossService,
+	living = livingCharacter, trusted = trustedPosition, safe = isSafe,
+	state = state, save = savePlayer,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+	effect = function(payload) remotes.CombatEffect:FireAllClients(payload) end,
+})
+actions:connectGathering()
 remotes.Attack.OnServerEvent:Connect(function(player, ...)
-	if select("#", ...) ~= 0 or not profiles[player] then return end
-	local now = os.clock()
-	if now - (lastAttack[player] or 0) < Config.AttackCooldown then return end
-	lastAttack[player] = now
-	local root = livingCharacter(player)
-	if not root or not trustedPosition(player, root) or isSafe(root.Position) then return end
-	local nearest, distance = nil, Config.AttackRange
-	for model, info in enemies do
-		local enemyRoot = model:FindFirstChild("HumanoidRootPart")
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if enemyRoot and humanoid and humanoid.Health > 0 then
-			local candidate = (enemyRoot.Position - root.Position).Magnitude
-			if candidate <= distance then nearest, distance = model, candidate end
-		end
-	end
-	for model in bossService.targets do
-		local enemyRoot = model:FindFirstChild("HumanoidRootPart")
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if enemyRoot and humanoid and humanoid.Health > 0 then
-			local candidate = (enemyRoot.Position - root.Position).Magnitude
-			if candidate <= distance then nearest, distance = model, candidate end
-		end
-	end
-	if nearest then
-		local targetRoot = nearest.HumanoidRootPart
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = {player.Character}
-		local hit = workspace:Raycast(root.Position, targetRoot.Position - root.Position, params)
-		if hit and not hit.Instance:IsDescendantOf(nearest) then return end
-		local profile = profiles[player].data
-		local damage = Config.AttackDamage + math.min(30, profile.level - 1) * 2 + Pets.damageBonus(profile, Config)
-		if bossService.targets[nearest] then
-			bossService:damage(nearest, player, damage)
-		else
-			enemies[nearest].lastAttacker = player
-			nearest.Humanoid:TakeDamage(math.min(damage, nearest.Humanoid.Health))
-		end
-	end
+	if select("#", ...) == 0 then actions:basic(player) end
+end)
+remotes.UseAbility.OnServerEvent:Connect(function(player, slot, ...)
+	if select("#", ...) == 0 and type(slot) == "string" then actions:ability(player, slot) end
+end)
+remotes.SelectClass.OnServerEvent:Connect(function(player, classId, ...)
+	if select("#", ...) == 0 then actions:selectClass(player, classId) end
+end)
+remotes.CraftUpgrade.OnServerEvent:Connect(function(player, ...)
+	if select("#", ...) == 0 then actions:craft(player) end
+end)
+remotes.ClaimExpedition.OnServerEvent:Connect(function(player, ...)
+	if select("#", ...) == 0 then actions:claim(player) end
 end)
 
 world.QuestPrompt.Triggered:Connect(function(player)
@@ -175,6 +166,10 @@ local function spawnEnemy(position, index, regionId)
 				profile.kills += 1
 				profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, Config.KillXP * region.EnemyLevel)
 			end
+			local profile = profiles[player].data
+			local material = ({forest = "wood", marsh = "iron", volcanic = "ember"})[regionId]
+			if material then profile.materials[material] = math.min(100000000, profile.materials[material] + 1) end
+			Campaign.recordKill(profile, regionId, Config)
 			state(player)
 			if profiles[player].data.questStatus == "return" then
 				remotes.Notify:FireClient(player, "Hedef tamamlandı! Köydeki bilgeye dön.")
@@ -245,21 +240,7 @@ local function characterAdded(player, character)
 	movement[player] = nil
 	local humanoid = character:WaitForChild("Humanoid", 10)
 	if humanoid then humanoid.WalkSpeed = Config.PlayerWalkSpeed end
-	local hand = character:WaitForChild("RightHand", 3) or character:FindFirstChild("Right Arm")
-	if hand and hand:IsA("BasePart") then
-		for _, spec in {
-			{name = "SwordGrip", size = Vector3.new(0.3, 1.2, 0.3), offset = CFrame.new(0, -0.6, 0), color = Color3.fromRGB(100, 65, 35)},
-			{name = "SwordBlade", size = Vector3.new(0.45, 3.2, 0.18), offset = CFrame.new(0, -2.5, 0), color = Color3.fromRGB(190, 220, 240)},
-		} do
-			local part = Instance.new("Part")
-			part.Name, part.Size, part.Color = spec.name, spec.size, spec.color
-			part.CanCollide, part.CanTouch, part.CanQuery, part.Massless = false, false, false, true
-			part.CFrame = hand.CFrame * spec.offset
-			part.Parent = character
-			local weld = Instance.new("WeldConstraint")
-			weld.Part0, weld.Part1, weld.Parent = hand, part, part
-		end
-	end
+	actions:characterAdded(player, character)
 	state(player)
 end
 local function playerAdded(player)
@@ -272,6 +253,7 @@ local function playerAdded(player)
 	end
 	if not player.Parent then ProfileStore.save(player, true) return end
 	profiles[player] = handle
+	if player.Character then actions:applyStats(player) end
 	player:SetAttribute("EquippedPet", handle.data.equippedPet or "")
 	state(player)
 	remotes.WorldState:FireClient(player, bossService:snapshot())
@@ -281,6 +263,7 @@ for _, player in Players:GetPlayers() do task.spawn(playerAdded, player) end
 Players.PlayerRemoving:Connect(function(player)
 	profiles[player] = nil
 	lastEquip[player] = nil
+	actions:remove(player)
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)
@@ -288,6 +271,12 @@ task.spawn(function()
 	while not closing do
 		task.wait(45)
 		for player in profiles do savePlayer(player) end
+	end
+end)
+task.spawn(function()
+	while not closing do
+		task.wait(1)
+		for player in profiles do state(player) end
 	end
 end)
 task.spawn(function()

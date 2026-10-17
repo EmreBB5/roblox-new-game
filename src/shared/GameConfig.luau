@@ -1,5 +1,31 @@
 -- Pure shared data: no Roblox globals. Loot decisions remain on the server.
 return table.freeze({
+	ResourceMax = 100, ResourceRegen = 8,
+	Classes = {
+		warrior = {Name = "Savaşçı", MaxHealth = 140, BasicDamage = 25, BasicRange = 11},
+		mage = {Name = "Büyücü", MaxHealth = 100, BasicDamage = 21, BasicRange = 32},
+	},
+	Abilities = {
+		warrior = {
+			primary = {Name = "Geniş Darbe", Kind = "area", Radius = 12, Multiplier = 1.8, Cost = 25, Cooldown = 6},
+			secondary = {Name = "İkinci Nefes", Kind = "heal", Heal = 35, Cost = 30, Cooldown = 14},
+		},
+		mage = {
+			primary = {Name = "Aether Oku", Kind = "projectile", Range = 48, Multiplier = 2.2, Cost = 25, Cooldown = 4},
+			secondary = {Name = "Yıldız Halkası", Kind = "area", Radius = 17, Multiplier = 1.5, Cost = 40, Cooldown = 9},
+		},
+	},
+	Equipment = {
+		{Name = "Gezgin Donanımı", DamageBonus = 4, HealthBonus = 10, Gold = 25, Materials = {wood = 5, iron = 0, ember = 0}},
+		{Name = "Muhafız Donanımı", DamageBonus = 9, HealthBonus = 20, Gold = 75, Materials = {wood = 8, iron = 5, ember = 0}},
+		{Name = "Aether Donanımı", DamageBonus = 15, HealthBonus = 35, Gold = 150, Materials = {wood = 10, iron = 8, ember = 6}},
+	},
+	Expedition = {
+		{Name = "Orman Seferi", Description = "5 orman düşmanını yen", RegionId = "forest", Target = 5, XP = 100, Gold = 25, Materials = {wood = 5, iron = 0, ember = 0}},
+		{Name = "Bataklık Seferi", Description = "5 bataklık düşmanını yen", RegionId = "marsh", Target = 5, XP = 175, Gold = 75, Materials = {wood = 8, iron = 5, ember = 0}},
+		{Name = "Köz Seferi", Description = "5 köz düşmanını yen", RegionId = "volcanic", Target = 5, XP = 250, Gold = 150, Materials = {wood = 10, iron = 8, ember = 6}},
+		{Name = "Ufukların Koruyucusu", Description = "En az 3 isabet ve %1 hasarla bir dünya bossunu yen", Target = 1, XP = 400, Gold = 250, Materials = {wood = 5, iron = 5, ember = 5}},
+	},
 	QuestTarget = 3, QuestXP = 75, QuestGold = 25, KillXP = 10,
 	AttackDamage = 25, AttackRange = 11, AttackCooldown = 0.55,
 	PlayerWalkSpeed = 20, MaxTravelSpeed = 40,

@@ -67,6 +67,7 @@ toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
 local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
 require(script.Parent:WaitForChild("PetVisuals")).start()
+require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"))
 
 local scales = {}
 for _, frame in ipairs({ stats, quest, hint, attackButton, toast }) do
@@ -75,15 +76,27 @@ end
 local function resize()
 	local camera = workspace.CurrentCamera
 	if not camera then return end
-	local viewport = camera.ViewportSize
+	local viewport = gui.AbsoluteSize
+	if viewport.X <= 0 or viewport.Y <= 0 then viewport = camera.ViewportSize end
 	local scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 680), 0.58, 1)
 	for _, item in pairs(scales) do item.Scale = scale end
 	quest.Position = UDim2.fromOffset(12, 24 + 155 * scale)
 	local eventScale = math.clamp(math.min(viewport.X / 780, viewport.Y / 650), 0.54, 1)
-	local toastTop = viewport.X < 480 and (60 + 287 * scale + 228 * eventScale) or 12
-	toast.Position = UDim2.new(0.5, 0, 0, toastTop)
+	local toastTop = viewport.X < 480 and (60 + 287 * scale + 264 * eventScale) or 12
+	toast.AnchorPoint = viewport.X < 480 and Vector2.zero or Vector2.new(0.5, 0)
+	toast.Position = viewport.X < 480 and UDim2.fromOffset(12, toastTop) or UDim2.new(0.5, 0, 0, toastTop)
 	attackButton.Position = viewport.Y < 450 and viewport.X > viewport.Y
 		and UDim2.new(1, -140, 1, -70) or UDim2.new(1, -24, 1, -155)
+	if UserInputService.TouchEnabled then
+		hint.Visible = false
+		scales[attackButton].Scale = 1
+		attackButton.Size = UDim2.fromOffset(72, 48)
+		attackButton.Position = viewport.X > viewport.Y and UDim2.new(1, -96, 1, -56) or UDim2.new(1, -24, 1, -215)
+		-- On short portrait phones, keep the jump corner and the skill row clear.
+		if viewport.X <= viewport.Y and viewport.Y < 620 then attackButton.Position = UDim2.new(0, 84, 1, -142) end
+		toast.Position = UDim2.fromOffset(12, 12)
+		toast.AnchorPoint = Vector2.zero
+	end
 	worldHUD:resize(viewport)
 end
 local viewportConnection
@@ -93,6 +106,7 @@ local function watchCamera()
 	resize()
 end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
 watchCamera()
 
 local function updateInputHint()

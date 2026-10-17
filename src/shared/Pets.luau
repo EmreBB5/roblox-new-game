@@ -37,7 +37,7 @@ function Pets.claim(profile, bossId, occurrence, damage, hits, maxHP, roll, conf
 	profile.lastBossClaims[bossId] = occurrence
 	profile.bossVictories[bossId] = math.min(100000000, (profile.bossVictories[bossId] or 0) + 1)
 	profile.petPity[bossId] = if dropped then 0 else pity
-	profile.gold = math.min(100000000, profile.gold + boss.Gold)
+	profile.gold = math.min(999999999, profile.gold + boss.Gold)
 	if dropped then
 		profile.pets[boss.PetId] = true
 		if duplicate then profile.stardust = math.min(100000000, profile.stardust + config.DuplicateStardust) end

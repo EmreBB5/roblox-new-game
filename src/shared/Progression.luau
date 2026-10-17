@@ -14,9 +14,10 @@ function Progression.addXP(level: number, xp: number, amount: number): (number, 
 end
 
 function Progression.newProfile()
-	return {version = 2, level = 1, xp = 0, gold = 0, kills = 0,
+	return {version = 3, level = 1, xp = 0, gold = 0, kills = 0,
 		questStatus = "available", questKills = 0, hasCrystal = false,
-		pets = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0}
+		pets = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
+		materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
 end
 
 function Progression.sanitize(raw: any)
@@ -49,6 +50,16 @@ function Progression.sanitize(raw: any)
 		profile.bossVictories[id] = bounded(if type(raw.bossVictories) == "table" then raw.bossVictories[id] else nil, 100000000)
 		profile.lastBossClaims[id] = bounded(if type(raw.lastBossClaims) == "table" then raw.lastBossClaims[id] else nil, 1000000000000)
 	end
+	if raw.classId == "mage" then profile.classId = "mage" end
+	profile.equipmentTier = bounded(raw.equipmentTier, 3)
+	for _, id in {"wood", "iron", "ember"} do
+		profile.materials[id] = bounded(if type(raw.materials) == "table" then raw.materials[id] else nil, 100000000)
+	end
+	if type(raw.expedition) == "table" then
+		profile.expedition.stage = math.max(1, bounded(raw.expedition.stage, 5))
+		local target = if profile.expedition.stage <= 3 then 5 elseif profile.expedition.stage == 4 then 1 else 0
+		profile.expedition.progress = bounded(raw.expedition.progress, target)
+	end
 	return profile
 end
 
@@ -71,7 +82,7 @@ function Progression.interact(profile, config): string
 	if profile.questStatus == "return" then
 		profile.questStatus = "completed"
 		profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, config.QuestXP)
-		profile.gold += config.QuestGold
+		profile.gold = math.min(999999999, profile.gold + config.QuestGold)
 		profile.hasCrystal = true
 		return "completed"
 	elseif profile.questStatus == "available" or profile.questStatus == "completed" then

@@ -91,7 +91,7 @@ local second = Progression.newProfile()
 eq(claim(second, epoch, 0).petId, "mossling", "second participant has personal independent roll")
 eq(second.bossVictories.thornwarden, 1, "no last-hit condition for reward")
 local migrated = Progression.sanitize({version = 1, level = 4, xp = 17, gold = 81, questStatus = "return", questKills = 3, hasCrystal = true})
-eq(migrated.version, 2, "v1 upgrades")
+eq(migrated.version, 3, "v1 upgrades")
 eq(migrated.level, 4, "v1 level preserved")
 eq(migrated.xp, 17, "v1 XP preserved")
 eq(migrated.gold, 81, "v1 gold preserved")
@@ -147,4 +147,14 @@ freshA.pets.mossling = true
 freshA.petPity.thornwarden = 8
 eq(freshB.pets.mossling, nil, "new profiles do not share ownership")
 eq(freshB.petPity.thornwarden, nil, "new profiles do not share pity")
+local rich = Progression.newProfile()
+rich.gold = 200000000
+local richReward = claim(rich, epoch, 0.99)
+eq(richReward.status, "rewarded", "high balance boss claim accepted")
+eq(rich.gold, 200000000 + Config.Bosses.thornwarden.Gold, "boss reward never reduces high balance")
+eq(Progression.snapshot(rich).gold, rich.gold, "high balance boss save roundtrip")
+rich.gold = 999999990
+claim(rich, epoch + 1, 0.99)
+eq(rich.gold, 999999999, "boss reward uses common currency cap")
+eq(Progression.snapshot(rich).gold, 999999999, "capped boss reward save roundtrip")
 print("Bosses and pets: " .. count .. " assertions passed")

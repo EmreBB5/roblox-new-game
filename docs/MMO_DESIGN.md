@@ -43,4 +43,14 @@ Eski v1 DataStore adı korunur; XP, altın, görev ve kristal v2 profile taşın
 
 Bağımsız Luau testleri takvim sınırları, kaçırılan saatlerden sonra kaymama, kişisel ödül, %3 sınırı, 30. garanti, tekrar ödül engeli, sahiplik, eski kayıt geçişi ve iç içe kayıt kopyasını kapsar. Tam kontrol komutu `bash scripts/check.sh` olur. Gerçek oyun/fizik/mobil/çoklu istemci/kalıcılık planı [MANUAL.md](../tests/MANUAL.md) içindedir; bu plan çalıştırılmış Studio sonucu değildir.
 
-Bu sürüm ortak bir Roblox sunucusunda açık dünya RPG temelidir. Bossların UTC çıkışları sunucular arasında aynı, canları ayrıdır. Sürekli ortak dünya, lonca, pazar ekonomisi ve sınıf/yetenek ağaçları için ek sistemler gerekir. Performans yük testi veya üretime hazır MMORPG iddiası yoktur.
+Bu sürüm ortak bir Roblox sunucusunda açık dünya RPG temelidir. Bossların UTC çıkışları sunucular arasında aynı, canları ayrıdır. Sürekli ortak dünya, lonca, pazar ekonomisi ve dallanan yetenek ağaçları için ek sistemler gerekir. Performans yük testi veya üretime hazır MMORPG iddiası yoktur.
+
+## Karakter gelişimi sürümü: sınıf, sefer ve donanım
+
+Savaşçı ve büyücü, aynı seviye/donanım/pet gelişimini farklı saldırı menzilleri ve Q/R yetenekleriyle kullanır. Savaşçı yakın alan darbesi ve kendi canını yenilemeye; büyücü uzak tek hedef ve çevresel alan hasarına sahiptir. Yetenek kaynağı ve bekleme zamanları sunucu tarafından tutulur. Hedef geometrisi doğrulanmadan kaynak tüketilmez. Güvenli köydeki sınıf değişimi mevcut can oranını korur; enerji ve bekleme süreleri aynı oturumda taşınır.
+
+Eldrin'in tekrarlanan öğretici görevine eklenen dört aşamalı sefer, her bölgeyi sırayla tanıtır. Üç bölgedeki beşer yaratık aşaması ve son world boss aşaması ayrı ayrı teslim edilir. Her aşamanın ödülü yalnız bir kez alınır. İlk üç aşama ilgili donanım tarifini karşılayacak malzeme/altın sağlar; oyuncu kaynak toplamaya zorunlu tutulmaz. Böylece keşif ve etkinlik sistemlerinin yanında ölçülebilir karakter gelişimi vardır.
+
+Borin'in üç kademeli tarifleri bütün gereksinimler kontrol edildikten sonra tek işlemde malzeme ve altın tüketir. Malzemeler bölge yaratıklarından ve oyuncu başına 30 saniye beklemeli 15 toplama noktasından gelir. Bunlar serbest oyuncu pazarı veya üretim ekonomisi simülasyonu değildir; malzeme toplama ve geliştirme döngüsünün ilk uygulamasıdır.
+
+Profil v3, v1/v2 ilerlemesini ve petleri korurken sınıf/kademe/malzeme/sefer alanlarını ekler. Bağımsız testler kaynak yenilenmesi, kesin cooldown sınırları, geçersiz hedefte harcama olmaması, bütün malzemeleri karşılamadan üretim yapılmaması, aşamaların tekrar ödül vermemesi ve iç içe profil alanlarının ayrık kopyasını doğrular. Gerçek Studio oynanışı, dokunma kontrolleri ve canlı DataStore kontrolü aynı manuel test planında ayrı durur.

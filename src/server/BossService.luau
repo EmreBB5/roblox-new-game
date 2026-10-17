@@ -34,6 +34,7 @@ function BossService:finish(current)
 			local result = Pets.claim(handle.data, current.id, current.occurrence,
 				contribution.damage, contribution.hits, current.maxHealth, self.random:NextNumber(), Config)
 			if result.status == "rewarded" then
+				if self.callbacks.eligible then self.callbacks.eligible(player) end
 				handle.data.level, handle.data.xp = Progression.addXP(handle.data.level, handle.data.xp, result.xp or 0)
 				local message = "Dünya bossu yenildi! Kişisel ödüllerin verildi."
 				if result.petId then

@@ -36,3 +36,13 @@ Bu kontroller de henüz Studio'da uygulanmış sayılmaz.
 7. **Pet koleksiyonu:** Yalnız sahip olunan pet kuşanılabilmeli. Bilinmeyen pet veya başkasının pet kimliği reddedilmeli. Tek pet kuşanılmalı; üç pet de aynı +4 saldırı katkısı sağlamalı. Kozmetik takipçi ölüm/yeniden doğma, kuşanma değiştirme ve iki oyuncuda çoğalmamalı.
 8. **Düşüş ve garanti:** Otomatik saf testler %3 sınırını, 30. uygun zafer garantisini ve kopya petin 10 yıldız tozuna dönüşmesini kapsar. Studio'da ödül/garanti sayacının ekrana doğru taşındığını ayrıca doğrula; test kolaylığı için üretim düşüş oranını değiştirme.
 9. **Kayıt geçişi ve tekrar giriş:** Ayrı yayınlanmış testte eski v1 profilin XP/altın/görevini koruduğunu, petler/kuşanılan pet/garanti sayaçlarının geri geldiğini kontrol et. Aynı global boss karşılaşmasına başka sunucuda tekrar katılmak ikinci ödül vermemeli. DataStore hatası durumunda boş veya kısmi profil kaydedilmemeli.
+
+## Sınıf, yetenek, sefer ve demirci
+
+1. Köyde savaşçı/büyücü arasında geçiş yap. Maksimum can, temel saldırı menzili ve silah görünümü doğru değişmeli. Yetenek kaynağı ve Q/R bekleme zamanları korunmalı; hasar aldıktan veya verdikten sonraki 10 saniyede sınıf değiştirilememeli.
+2. Q/R yeteneklerini klavye, mobil düğme ve gamepad'de kullan. Geçersiz/duvar arkasındaki/menzil dışındaki hedefe saldırı ve tam candaki iyileştirme kaynak veya bekleme süresi tüketmemeli. Hızlı tekrar kullanım, sahte slot ve ek RemoteEvent argümanları sunucuda reddedilmeli.
+3. Kaynak 100'ü aşmamalı, saniyede 8 yenilenmeli; yeniden doğma veya sınıf değiştirme bekleme süresini sıfırlamamalı. İstemci HUD sayacı GetServerTimeNow zamanıyla sunucuya uymalı.
+4. Eski Eldrin görevi (3 orman düşmanı) ve sefer günlüğü (5 orman → 5 bataklık → 5 köz → 1 uygun boss) ayrı izlenmeli. Yanlış bölge ve yetersiz boss katılımı seferi ilerletmemeli. Her aşama yalnız oyuncunun teslimiyle ilerlemeli; tekrarlanan teslim ödülü çoğaltmamalı.
+5. Demirciden uzakta geliştirme isteği reddedilmeli. Eksik altın veya son kontrol edilen eksik malzemede hiçbir ödeme alınmamalı; yalnız sıradaki kademe yapılmalı. Üç kademeden sonra tekrar istek kaynak tüketmemeli. Stat ve silah görseli kademeyle güncellenmeli.
+6. Bir kaynak düğümünü topla; 30 saniye dolmadan aynı oyuncu yeniden alamamalı, başka oyuncu kendi hakkını kullanabilmeli. Uzaktan sahte ProximityPrompt tetikleme işe yaramamalı.
+7. Ayrı yayınlanmış testte sınıf, kademe, malzemeler ve sefer ilerlemesinin yeniden girişte korunduğunu doğrula. Eski v1/v2 kayıtların altını, XP'si, görevi, peti ve boss garanti sayacı korunmalı.

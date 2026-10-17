@@ -8,4 +8,5 @@ done < <(find src tests -type f -name '*.luau' -print0)
 luau-analyze src/shared/*.luau tests/*.luau
 luau tests/progression.spec.luau
 luau tests/bosses.spec.luau
+luau tests/adventure.spec.luau
 bash scripts/build.sh

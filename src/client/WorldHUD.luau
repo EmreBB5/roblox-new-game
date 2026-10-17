@@ -26,13 +26,14 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	for index, id in ipairs(order) do
 		eventLabels[id] = label(events, Config.Bosses[id].Name .. "\nSaat bekleniyor…", UDim2.fromOffset(12, 51 + (index - 1) * 43), UDim2.new(1, -24, 0, 40), 12)
 	end
-	local menu = frame(gui, UDim2.fromOffset(208, 40), UDim2.new(1, -12, 0, 210), Vector2.new(1, 0))
+	local menu = frame(gui, UDim2.fromOffset(208, 76), UDim2.new(1, -12, 0, 210), Vector2.new(1, 0))
 	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.3, Visible = false, Active = true, ZIndex = 5 }, gui)
 	local content = frame(overlay, UDim2.fromOffset(540, 440), UDim2.fromScale(0.5, 0.5), Vector2.new(0.5, 0.5))
 	content.ZIndex = 6
 	local contentScale = make("UIScale", { Scale = 1 }, content)
 	local title = label(content, "", UDim2.fromOffset(18, 9), UDim2.new(1, -100, 0, 30), 21, colors.gold)
 	local collection = make("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -32, 1, -60), Position = UDim2.fromOffset(16, 52) }, content)
+	local characterPanel = make("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -32, 1, -60), Position = UDim2.fromOffset(16, 52), Visible = false }, content)
 	local map = make("Frame", { BackgroundColor3 = Color3.fromRGB(26, 46, 40), BorderSizePixel = 0, Size = UDim2.new(1, -32, 1, -84), Position = UDim2.fromOffset(16, 50), ClipsDescendants = true }, content)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, map)
 	local mapHint = label(content, "Şematik harita • İşaretler konumu gösterir; ışınlanma yok.", UDim2.fromOffset(18, 408), UDim2.new(1, -36, 0, 22), 11, colors.muted)
@@ -50,17 +51,22 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		self.open = visible
 		overlay.Visible = visible
 		collection.Visible = mode == "pets"
+		characterPanel.Visible = mode == "character"
 		map.Visible = mode == "map"
 		mapHint.Visible = mode == "map"
-		title.Text = mode == "pets" and "YOL ARKADAŞLARIN" or "AETHERIA • DÜNYA HARİTASI"
+		title.Text = mode == "pets" and "YOL ARKADAŞLARIN" or (mode == "character" and "KAHRAMANIN" or "AETHERIA • DÜNYA HARİTASI")
 		if visible then
 			if not wasOpen then previousSelection = GuiService.SelectedObject end
 			if UserInputService.GamepadEnabled then GuiService.SelectedObject = closeButton end
 		elseif GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(content) then GuiService.SelectedObject = previousSelection end
 	end
 	closeButton = button(content, "KAPAT", UDim2.new(1, -86, 0, 10), UDim2.fromOffset(70, 30), function() show(selectedMenu) end)
-	button(menu, "PET [P / Y]", UDim2.fromOffset(5, 5), UDim2.fromOffset(94, 30), function() show("pets") end)
-	button(menu, "HARİTA [M / L3]", UDim2.fromOffset(105, 5), UDim2.fromOffset(98, 30), function() show("map") end)
+	local menuButtons = {
+		button(menu, "PET [P / Y]", UDim2.fromOffset(5, 5), UDim2.fromOffset(94, 30), function() show("pets") end),
+		button(menu, "HARİTA [M / L3]", UDim2.fromOffset(105, 5), UDim2.fromOffset(98, 30), function() show("map") end),
+		button(menu, "KARAKTER [C / ↑]", UDim2.fromOffset(5, 41), UDim2.fromOffset(198, 30), function() show("character") end),
+	}
+	local characterHUD = require(script.Parent:WaitForChild("CharacterHUD")).create(gui, characterPanel, remotes, make, label, button, colors, function() return self.open end)
 	local cards = {}
 	for index, bossId in ipairs(order) do
 		local boss = Config.Bosses[bossId]
@@ -102,6 +108,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	setZ(content)
 	function self:setState(state)
 		self.state = state
+		characterHUD:setState(state)
 		for id, card in pairs(cards) do
 			local owned = (state.pets or {})[id] == true
 			local equipped = state.equippedPet == id
@@ -112,6 +119,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		end
 	end
 	function self:resize(viewport)
+		characterHUD:resize(viewport)
 		local scale = math.clamp(math.min((viewport.X - 24) / 540, (viewport.Y - 90) / 440), 0.4, 1)
 		contentScale.Scale = scale
 		local compact = viewport.X < 700
@@ -123,6 +131,37 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		local top = viewport.X < 480 and (36 + 287 * baseScale) or 12
 		events.Position = UDim2.new(1, -12, 0, top)
 		menu.Position = UDim2.new(1, -12, 0, top + 10 + 188 * eventScale)
+		if UserInputService.TouchEnabled then
+			-- Short portrait screens use denser read-only rows, never smaller touch targets.
+			if viewport.X < 480 then
+				events.Size = UDim2.fromOffset(290, 140)
+				clock.Position = UDim2.fromOffset(12, 25)
+				clock.Size = UDim2.new(1, -24, 0, 14)
+				for index, id in ipairs(order) do
+					eventLabels[id].Position = UDim2.fromOffset(12, 40 + (index - 1) * 30)
+					eventLabels[id].Size = UDim2.new(1, -24, 0, 28)
+				end
+			else
+				events.Size = UDim2.fromOffset(290, 188)
+				clock.Position = UDim2.fromOffset(12, 29)
+				clock.Size = UDim2.new(1, -24, 0, 17)
+				for index, id in ipairs(order) do
+					eventLabels[id].Position = UDim2.fromOffset(12, 51 + (index - 1) * 43)
+					eventLabels[id].Size = UDim2.new(1, -24, 0, 40)
+				end
+			end
+			local width = viewport.X < 480 and 195 or 264
+			menu.Size = UDim2.fromOffset(width, 48)
+			menu.Position = UDim2.new(1, -24, 0, top + 10 + events.Size.Y.Offset * eventScale)
+			menu:FindFirstChildOfClass("UIScale").Scale = 1
+			local cell = (width - 12) / 3
+			for index, item in ipairs(menuButtons) do
+				item.Text = ({ "PET", "HARİTA", "KARAKTER" })[index]
+				item.TextSize = 11
+				item.Position = UDim2.fromOffset(3 + (index - 1) * (cell + 3), 2)
+				item.Size = UDim2.fromOffset(cell, 44)
+			end
+		end
 		clock.TextSize = compact and 11 or 10
 	end
 	UserInputService.InputBegan:Connect(function(input, processed)
@@ -130,7 +169,8 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		if self.open and (input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonB) then show(selectedMenu); return end
 		if processed then return end
 		if input.KeyCode == Enum.KeyCode.P or input.KeyCode == Enum.KeyCode.ButtonY then show("pets")
-		elseif input.KeyCode == Enum.KeyCode.M or input.KeyCode == Enum.KeyCode.ButtonL3 then show("map") end
+		elseif input.KeyCode == Enum.KeyCode.M or input.KeyCode == Enum.KeyCode.ButtonL3 then show("map")
+		elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.DPadUp then show("character") end
 	end)
 	remotes:WaitForChild("WorldState").OnClientEvent:Connect(function(world)
 		if type(world) ~= "table" then return end

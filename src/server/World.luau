@@ -4,6 +4,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.GameConfig)
 local World = {}
+local weaponRequests = setmetatable({}, {__mode = "k"})
 
 local palette = {
 	grass = Color3.fromRGB(73, 108, 79),
@@ -125,6 +126,35 @@ local function guardian(parent)
 	return model, prompt
 end
 
+local function blacksmith(parent)
+	local model = Instance.new("Model")
+	model.Name = "Borin"
+	local root = part(model, "HumanoidRootPart", Vector3.new(2, 2, 1), Vector3.new(-14, 3, 12), palette.wood)
+	root.Transparency = 1
+	root.CanCollide = false
+	part(model, "Apron", Vector3.new(2.7, 3.3, 1.6), Vector3.new(-14, 2.5, 12), Color3.fromRGB(108, 72, 49), Enum.Material.Fabric)
+	local head = part(model, "Head", Vector3.new(1.8, 1.8, 1.8), Vector3.new(-14, 5, 12), Color3.fromRGB(207, 165, 126))
+	head.Shape = Enum.PartType.Ball
+	part(model, "Beard", Vector3.new(1.7, 1.2, 0.4), Vector3.new(-14, 4.5, 11.2), Color3.fromRGB(76, 66, 59))
+	part(model, "AnvilBase", Vector3.new(3.4, 1.3, 2), Vector3.new(-9, 0.9, 12), palette.stone, Enum.Material.Metal)
+	part(model, "AnvilTop", Vector3.new(5, 0.7, 2.2), Vector3.new(-9, 2, 12), Color3.fromRGB(77, 85, 95), Enum.Material.Metal)
+	part(model, "ForgeCoals", Vector3.new(3.5, 0.4, 3.5), Vector3.new(-20, 0.6, 15), Color3.fromRGB(255, 143, 82), Enum.Material.Neon)
+	label(head, "BORİN · DEMİRCİ", "Donanım yükseltme · Tarifler: C", 280)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "ForgePrompt"
+	prompt.ObjectText = "Borin · Demirci"
+	prompt.ActionText = "Donanımı güçlendir"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.MaxActivationDistance = 12
+	prompt.HoldDuration = 0.6
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = root
+	model.PrimaryPart = root
+	model.Parent = parent
+	return model, prompt
+end
+
 local regionColors = {
 	forest = {ground = Color3.fromRGB(61, 96, 68), skin = Color3.fromRGB(109, 151, 91), accent = Color3.fromRGB(174, 235, 117)},
 	marsh = {ground = Color3.fromRGB(58, 83, 93), skin = Color3.fromRGB(94, 169, 172), accent = Color3.fromRGB(127, 231, 241)},
@@ -167,6 +197,52 @@ local function arena(parent, bossId, definition)
 	label(sign, definition.Name, string.format("HER SAAT :%02d · Nadir pet %%3", definition.Minute), 320)
 end
 
+local function resourceNodes(parent)
+	local folder = Instance.new("Folder")
+	folder.Name = "GatheringNodes"
+	folder.Parent = parent
+	local result = {}
+	local definitions = {
+		{regionId = "forest", kind = "wood", name = "Yaban Odunu", color = Color3.fromRGB(140, 112, 70), material = Enum.Material.Wood},
+		{regionId = "marsh", kind = "iron", name = "Sis Demiri", color = Color3.fromRGB(151, 181, 200), material = Enum.Material.Metal},
+		{regionId = "volcanic", kind = "ember", name = "Köz Cevheri", color = Color3.fromRGB(247, 152, 81), material = Enum.Material.Neon},
+	}
+	for _, definition in definitions do
+		local region = Config.Regions[definition.regionId]
+		for index, offset in {Vector3.new(-110, 0, 55), Vector3.new(105, 0, 65), Vector3.new(-120, 0, -40), Vector3.new(125, 0, -60), Vector3.new(-65, 0, 110)} do
+			local position = Vector3.new(region.X, 0.5, region.Z) + offset
+			local node = Instance.new("Model")
+			node.Name = definition.name .. " " .. index
+			node.Parent = folder
+			local base = part(node, "Resource", Vector3.new(3.2, 3.2, 3.2), position + Vector3.new(0, 1.7, 0), definition.color, definition.material)
+			base.CFrame *= CFrame.Angles(0, index * 0.7, 0.12)
+			if definition.kind == "wood" then
+				for _, side in {-1, 1} do
+					part(node, "WoodBundle", Vector3.new(1.2, 1.3, 4.3), position + Vector3.new(side * 1.3, 0.9, 0), definition.color, Enum.Material.Wood)
+				end
+			else
+				local shard = part(node, "OreVein", Vector3.new(0.8, 3.6, 0.8), position + Vector3.new(1, 2.5, 0), definition.color, Enum.Material.Neon)
+				shard.CFrame *= CFrame.Angles(0, 0.4, 0.3)
+				shard.CanCollide = false
+			end
+			label(base, definition.name, "Topla · E", 190).MaxDistance = 65
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.Name = "GatherPrompt"
+			prompt.ObjectText = definition.name
+			prompt.ActionText = "Malzeme topla"
+			prompt.KeyboardKeyCode = Enum.KeyCode.E
+			prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+			prompt.MaxActivationDistance = 12
+			prompt.RequiresLineOfSight = false
+			prompt.HoldDuration = 1.2
+			prompt.Parent = base
+			node.PrimaryPart = base
+			table.insert(result, {id = definition.regionId .. "_" .. index, kind = definition.kind, amount = 1, prompt = prompt, position = base.Position})
+		end
+	end
+	return result
+end
+
 function World.build()
 	assert(not workspace:FindFirstChild("AetheriaWorld"), "World already exists")
 	local folder = Instance.new("Folder")
@@ -204,8 +280,9 @@ function World.build()
 	local spawnLabel = label(spawn, "AETHERIA · UFUKLAR", "Güvenli köy · Eldrin ile konuş", 330)
 	spawnLabel.StudsOffsetWorldSpace = Vector3.new(0, 5, 0)
 	local npc, prompt = guardian(folder)
+	local smith, forgePrompt = blacksmith(folder)
 	local board = part(folder, "ExpeditionBoard", Vector3.new(13, 8, 1), Vector3.new(-16, 6, 0), palette.wood, Enum.Material.Wood)
-	label(board, "KEŞİF VE WORLD BOSS", "HARİTA: M  ·  PETLER: P\nOrman :00  /  Bataklık :20  /  Köz :40", 360)
+	label(board, "SINIF VE SEFER: C", "HARİTA: M  ·  PETLER: P  ·  YETENEK: Q/R\nOrman :00  /  Bataklık :20  /  Köz :40", 390)
 	-- One continuous map; roads join all regions without loading screens.
 	for id, region in Config.Regions do
 		local colors = regionColors[id]
@@ -267,6 +344,7 @@ function World.build()
 		end
 	end
 	for id, definition in Config.Bosses do arena(folder, id, definition) end
+	local nodes = resourceNodes(folder)
 	local enemySpawns = {}
 	for id, region in Config.Regions do
 		for _, offset in {Vector3.new(-58, 0, 42), Vector3.new(52, 0, 37), Vector3.new(-74, 0, -27), Vector3.new(72, 0, -32)} do
@@ -289,11 +367,65 @@ function World.build()
 		Spawn = spawn,
 		QuestGiver = npc,
 		QuestPrompt = prompt,
+		Blacksmith = smith,
+		ForgePrompt = forgePrompt,
+		ResourceNodes = nodes,
 		EnemySpawns = enemySpawns,
 		EnemyFolder = enemies,
 		SafeZoneCenter = Vector3.zero,
 		SafeZoneRadius = Config.SafeZoneRadius,
 	}
+end
+
+-- Equipment is cosmetic geometry. Combat stats come from validated server data.
+function World.equipWeapon(character, classId, tier)
+	local request = (weaponRequests[character] or 0) + 1
+	weaponRequests[character] = request
+	local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
+	if not hand then hand = character:WaitForChild("RightHand", 3) or character:FindFirstChild("Right Arm") end
+	if not hand or not hand:IsA("BasePart") or not character.Parent or weaponRequests[character] ~= request then return end
+	-- Clean up after the only yield; a stale request cannot duplicate equipment.
+	local previous = character:FindFirstChild("AetheriaWeapon")
+	if previous then previous:Destroy() end
+	for _, name in {"SwordGrip", "SwordBlade"} do
+		local legacy = character:FindFirstChild(name)
+		if legacy then legacy:Destroy() end
+	end
+	local colors = {
+		[0] = Color3.fromRGB(194, 216, 230),
+		[1] = Color3.fromRGB(153, 224, 156),
+		[2] = Color3.fromRGB(127, 211, 240),
+		[3] = Color3.fromRGB(255, 175, 100),
+	}
+	local color = colors[tier] or colors[0]
+	local weapon = Instance.new("Model")
+	weapon.Name = "AetheriaWeapon"
+	local grip = if classId == "mage" then hand.CFrame else hand.CFrame * CFrame.new(0, -0.2, -0.4) * CFrame.Angles(-math.pi / 2, 0, 0)
+	local function piece(name, size, offset, tint, material)
+		local item = part(weapon, name, size, Vector3.zero, tint, material)
+		item.Anchored = false
+		item.Massless = true
+		item.CanCollide = false
+		item.CanTouch = false
+		item.CanQuery = false
+		item.CFrame = grip * offset
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = hand
+		weld.Part1 = item
+		weld.Parent = item
+		return item
+	end
+	if classId == "mage" then
+		piece("Staff", Vector3.new(0.3, 4, 0.3), CFrame.new(), palette.wood, Enum.Material.Wood)
+		local gem = piece("Focus", Vector3.new(0.85, 0.85, 0.85), CFrame.new(0, 2.35, 0), color, Enum.Material.Neon)
+		gem.Shape = Enum.PartType.Ball
+		piece("FocusRing", Vector3.new(1.4, 0.2, 0.6), CFrame.new(0, 1.9, 0), palette.gold, Enum.Material.Metal)
+	else
+		piece("Grip", Vector3.new(0.3, 1, 0.3), CFrame.new(), palette.wood, Enum.Material.Wood)
+		piece("Guard", Vector3.new(1.6, 0.25, 0.4), CFrame.new(0, 0.6, 0), palette.gold, Enum.Material.Metal)
+		piece("Blade", Vector3.new(0.45, 3, 0.18), CFrame.new(0, 2.1, 0), color, Enum.Material.Metal)
+	end
+	weapon.Parent = character
 end
 
 function World.createEnemy(folder, position, index, regionId)
