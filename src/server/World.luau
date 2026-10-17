@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.GameConfig)
 local World = {}
 local weaponRequests = setmetatable({}, {__mode = "k"})
+local gatherOffsets = {Vector3.new(-110, 0, 55), Vector3.new(105, 0, 65), Vector3.new(-120, 0, -40), Vector3.new(125, 0, -60), Vector3.new(-65, 0, 110)}
 
 local palette = {
 	grass = Color3.fromRGB(73, 108, 79),
@@ -159,13 +160,122 @@ local regionColors = {
 	forest = {ground = Color3.fromRGB(61, 96, 68), skin = Color3.fromRGB(109, 151, 91), accent = Color3.fromRGB(174, 235, 117)},
 	marsh = {ground = Color3.fromRGB(58, 83, 93), skin = Color3.fromRGB(94, 169, 172), accent = Color3.fromRGB(127, 231, 241)},
 	volcanic = {ground = Color3.fromRGB(82, 65, 65), skin = Color3.fromRGB(161, 91, 69), accent = Color3.fromRGB(255, 164, 80)},
+	frost = {ground = Color3.fromRGB(207, 225, 235), skin = Color3.fromRGB(141, 192, 219), accent = Color3.fromRGB(178, 244, 255)},
+	desert = {ground = Color3.fromRGB(211, 175, 111), skin = Color3.fromRGB(190, 148, 84), accent = Color3.fromRGB(255, 221, 121)},
 }
+
+local roads = {
+	{{-8, -45}, {-130, -140}, 20}, {{-130, -140}, {-230, -245}, 20},
+	{{8, -45}, {150, -170}, 20}, {{150, -170}, {260, -335}, 20},
+	{{-150, -250}, {-110, -520}, 18}, {{190, -370}, {110, -520}, 18},
+	{{-110, -520}, {0, -660}, 22}, {{110, -520}, {0, -660}, 22}, {{0, -660}, {0, -755}, 22},
+	{{-110, -520}, {-340, -650}, 22}, {{-340, -650}, {-700, -835}, 22}, {{-700, -835}, {-760, -1020}, 22},
+	{{110, -520}, {360, -610}, 22}, {{360, -610}, {730, -790}, 22}, {{730, -790}, {790, -990}, 22},
+	{{-190, -140}, {-130, -140}, 14}, {{220, -215}, {190, -230}, 14}, {{18, -630}, {0, -660}, 14},
+}
+
+local function nearRoad(x, z)
+	local point = Vector2.new(x, z)
+	for _, road in roads do
+		local from, to = Vector2.new(road[1][1], road[1][2]), Vector2.new(road[2][1], road[2][2])
+		local segment = to - from
+		local along = math.clamp((point - from):Dot(segment) / segment:Dot(segment), 0, 1)
+		if (point - (from + segment * along)).Magnitude < road[3] / 2 + 10 then return true end
+	end
+	return false
+end
+
+local function frostDecoration(parent, position, random)
+	if random:NextNumber() < 0.6 then
+		local scale = random:NextNumber(1, 1.8)
+		part(parent, "FrostPineTrunk", Vector3.new(2, 12, 2) * scale, position + Vector3.new(0, 6, 0) * scale, palette.wood, Enum.Material.Wood)
+		for tier = 1, 3 do
+			local size = (13 - tier * 2.3) * scale
+			local crown = part(parent, "SnowCrown", Vector3.new(size, 6 * scale, size), position + Vector3.new(0, 6 + tier * 4, 0) * scale,
+				if tier == 1 then Color3.fromRGB(80, 121, 133) else Color3.fromRGB(221, 237, 243), Enum.Material.Snow)
+			crown.Shape = Enum.PartType.Ball
+			crown.CanCollide = false
+		end
+	else
+		local height = random:NextNumber(7, 21)
+		local ice = part(parent, "GlacierShard", Vector3.new(5, height, 5), position + Vector3.new(0, height / 2, 0), regionColors.frost.accent, Enum.Material.Ice)
+		ice.CFrame *= CFrame.Angles(0.12, random:NextNumber(0, math.pi), 0.13)
+		ice.Transparency = 0.2
+	end
+end
+
+local function desertDecoration(parent, position, random)
+	if random:NextNumber() < 0.55 then
+		local height = random:NextNumber(6, 11)
+		local green = Color3.fromRGB(87, 128, 85)
+		part(parent, "Cactus", Vector3.new(1.8, height, 1.8), position + Vector3.new(0, height / 2, 0), green, Enum.Material.Grass)
+		for _, side in {-1, 1} do
+			part(parent, "CactusArm", Vector3.new(3, 1.3, 1.3), position + Vector3.new(side * 1.8, height * 0.55, 0), green, Enum.Material.Grass)
+			part(parent, "CactusTip", Vector3.new(1.3, 3, 1.3), position + Vector3.new(side * 3, height * 0.55 + 1, 0), green, Enum.Material.Grass)
+		end
+	else
+		local height = random:NextNumber(5, 16)
+		local pillar = part(parent, "AncientSandstone", Vector3.new(5, height, 5), position + Vector3.new(0, height / 2, 0), Color3.fromRGB(182, 143, 90), Enum.Material.Sandstone)
+		pillar.CFrame *= CFrame.Angles(0, random:NextNumber(0, math.pi), 0.08)
+		part(parent, "RuinedCapital", Vector3.new(7, 1.5, 7), position + Vector3.new(0, height, 0), regionColors.desert.ground, Enum.Material.Sandstone)
+	end
+end
 
 local function disc(parent, name, position, radius, color, material)
 	local item = part(parent, name, Vector3.new(0.25, radius * 2, radius * 2), position, color, material)
 	item.Shape = Enum.PartType.Cylinder
 	item.CFrame = CFrame.new(position) * CFrame.Angles(0, 0, math.pi / 2)
 	return item
+end
+
+local function travelShrines(parent)
+	local folder = Instance.new("Folder")
+	folder.Name = "TravelShrines"
+	folder.Parent = parent
+	local result = {}
+	for id, definition in Config.Waypoints do
+		local coordinates = definition.Position
+		local position = Vector3.new(coordinates.x, coordinates.y, coordinates.z)
+		local colors = regionColors[definition.RegionId]
+		local accent = if colors then colors.accent else palette.magic
+		local model = Instance.new("Model")
+		model.Name = "Waypoint_" .. id
+		-- Six small persistent platforms provide a floor before distant terrain streams in.
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+		model.Parent = folder
+		disc(model, "ShrinePlatform", position + Vector3.new(0, 0.3, 0), 11, palette.stone, Enum.Material.Slate)
+		local rune = disc(model, "TravelRune", position + Vector3.new(0, 0.5, 0), 8, accent, Enum.Material.Neon)
+		rune.Transparency = 0.5
+		rune.CanCollide = false
+		rune.CanTouch = false
+		rune.CanQuery = false
+		for _, side in {-1, 1} do
+			local column = position + Vector3.new(side * 7, 0, -4)
+			part(model, "ShrineColumn", Vector3.new(2.3, 7, 2.3), column + Vector3.new(0, 3.5, 0), palette.stone, Enum.Material.Slate)
+			local gem = crystal(model, column + Vector3.new(0, 7, 0), 0.45)
+			gem.Color = accent
+		end
+		local focus = crystal(model, position + Vector3.new(0, 0.7, -3), 1)
+		focus.Color = accent
+		label(focus, definition.Name, "SEYAHAT TÜRBESİ · Keşfet / haritayı aç: E", 340)
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "DiscoverWaypoint"
+		prompt.ObjectText = definition.Name
+		prompt.ActionText = "Keşfet / seyahat haritasını aç"
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+		prompt.MaxActivationDistance = 12
+		prompt.HoldDuration = 0.5
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = focus
+		model.PrimaryPart = focus
+		result[id] = {
+			id = id, prompt = prompt, position = position,
+			-- The open front of the platform stays clear of columns and the crystal.
+			arrival = CFrame.new(position + Vector3.new(0, 4, 9)),
+		}
+	end
+	return result
 end
 
 local function path(parent, from, to, width)
@@ -206,10 +316,12 @@ local function resourceNodes(parent)
 		{regionId = "forest", kind = "wood", name = "Yaban Odunu", color = Color3.fromRGB(140, 112, 70), material = Enum.Material.Wood},
 		{regionId = "marsh", kind = "iron", name = "Sis Demiri", color = Color3.fromRGB(151, 181, 200), material = Enum.Material.Metal},
 		{regionId = "volcanic", kind = "ember", name = "Köz Cevheri", color = Color3.fromRGB(247, 152, 81), material = Enum.Material.Neon},
+		{regionId = "frost", kind = "iron", name = "Buzul Demiri", color = Color3.fromRGB(171, 223, 245), material = Enum.Material.Ice},
+		{regionId = "desert", kind = "ember", name = "Güneş Cevheri", color = Color3.fromRGB(246, 209, 104), material = Enum.Material.Sandstone},
 	}
 	for _, definition in definitions do
 		local region = Config.Regions[definition.regionId]
-		for index, offset in {Vector3.new(-110, 0, 55), Vector3.new(105, 0, 65), Vector3.new(-120, 0, -40), Vector3.new(125, 0, -60), Vector3.new(-65, 0, 110)} do
+		for index, offset in gatherOffsets do
 			local position = Vector3.new(region.X, 0.5, region.Z) + offset
 			local node = Instance.new("Model")
 			node.Name = definition.name .. " " .. index
@@ -257,7 +369,13 @@ function World.build()
 	atmosphere.Color = Color3.fromRGB(197, 217, 223)
 	atmosphere.Decay = Color3.fromRGB(104, 126, 145)
 	atmosphere.Parent = Lighting
-	part(folder, "OpenWorldGround", Vector3.new(1800, 6, 1600), Vector3.new(0, -3, -400), palette.grass, Enum.Material.Grass)
+	local bounds = Config.MapBounds
+	-- BasePart dimensions are limited to 2048 studs; tile the expanded world.
+	for x = bounds.MinX, bounds.MaxX - 1, 1000 do
+		for z = bounds.MinZ, bounds.MaxZ - 1, 800 do
+			part(folder, "OpenWorldGround", Vector3.new(1000, 6, 800), Vector3.new(x + 500, -3, z + 400), palette.grass, Enum.Material.Grass)
+		end
+	end
 	part(folder, "VillageSquare", Vector3.new(110, 0.3, 100), Vector3.new(0, 0.12, 4), Color3.fromRGB(157, 147, 122), Enum.Material.Cobblestone)
 	local boundary = disc(folder, "VillageSanctuary", Vector3.new(0, 0.35, 0), Config.SafeZoneRadius, palette.magic, Enum.Material.Neon)
 	boundary.Transparency = 0.87
@@ -282,24 +400,18 @@ function World.build()
 	local npc, prompt = guardian(folder)
 	local smith, forgePrompt = blacksmith(folder)
 	local board = part(folder, "ExpeditionBoard", Vector3.new(13, 8, 1), Vector3.new(-16, 6, 0), palette.wood, Enum.Material.Wood)
-	label(board, "SINIF VE SEFER: C", "HARİTA: M  ·  PETLER: P  ·  YETENEK: Q/R\nOrman :00  /  Bataklık :20  /  Köz :40", 390)
+	label(board, "SINIF: C · GRUP: G", "HARİTA: M  ·  PETLER: P  ·  YETENEK: Q/R\nTürbeleri keşfet · Arkadaşlarınla savaş", 390)
 	-- One continuous map; roads join all regions without loading screens.
 	for id, region in Config.Regions do
 		local colors = regionColors[id]
 		local zone = Instance.new("Folder")
 		zone.Name = "Region_" .. id
 		zone.Parent = folder
-		disc(zone, "BiomeGround", Vector3.new(region.X, 0.12, region.Z), region.Radius, colors.ground, if id == "volcanic" then Enum.Material.Basalt else Enum.Material.Grass)
+		disc(zone, "BiomeGround", Vector3.new(region.X, 0.12, region.Z), region.Radius, colors.ground, Enum.Material[region.Ground])
 	end
-	path(folder, Vector3.new(-8, 0, -45), Vector3.new(-130, 0, -140), 20)
-	path(folder, Vector3.new(-130, 0, -140), Vector3.new(-230, 0, -245), 20)
-	path(folder, Vector3.new(8, 0, -45), Vector3.new(150, 0, -170), 20)
-	path(folder, Vector3.new(150, 0, -170), Vector3.new(260, 0, -335), 20)
-	path(folder, Vector3.new(-150, 0, -250), Vector3.new(-110, 0, -520), 18)
-	path(folder, Vector3.new(190, 0, -370), Vector3.new(110, 0, -520), 18)
-	path(folder, Vector3.new(-110, 0, -520), Vector3.new(0, 0, -660), 22)
-	path(folder, Vector3.new(110, 0, -520), Vector3.new(0, 0, -660), 22)
-	path(folder, Vector3.new(0, 0, -660), Vector3.new(0, 0, -755), 22)
+	for _, road in roads do path(folder, Vector3.new(road[1][1], 0, road[1][2]), Vector3.new(road[2][1], 0, road[2][2]), road[3]) end
+	local junction = part(folder, "FrontierSign", Vector3.new(12, 6, 1), Vector3.new(0, 4, -535), palette.wood, Enum.Material.Wood)
+	label(junction, "YENİ UFUKLAR", "Batı: Buzul · Sv.8  /  Doğu: Çöl · Sv.11\nGüney: Köy  /  Kuzey: Köz", 390)
 	-- Village arch and regional welcome stones provide navigation on foot.
 	for _, x in {-10, 10} do
 		part(folder, "GatePillar", Vector3.new(4, 15, 4), Vector3.new(x, 7.5, -62), palette.stone, Enum.Material.Slate)
@@ -314,13 +426,22 @@ function World.build()
 		local gatePosition = Vector3.new(region.X, 4, region.Z + region.Radius * 0.62)
 		local marker = part(zone, "WelcomeStone", Vector3.new(7, 8, 3), gatePosition, palette.stone, Enum.Material.Slate)
 		label(marker, region.Name, "Önerilen seviye " .. region.EnemyLevel .. " · Harita: M", 330)
-		for _ = 1, (if id == "forest" then 85 else 45) do
+		for _ = 1, (if id == "forest" then 85 elseif id == "frost" or id == "desert" then 100 else 45) do
 			local x = region.X + random:NextNumber(-region.Radius, region.Radius)
 			local z = region.Z + random:NextNumber(-region.Radius, region.Radius)
 			local radial = Vector2.new(x - region.X, z - region.Z).Magnitude
 			local blocked = radial > region.Radius or radial < 90
+			if nearRoad(x, z) then blocked = true end
+			for _, offset in gatherOffsets do
+				if Vector2.new(x - region.X - offset.X, z - region.Z - offset.Z).Magnitude < 12 then blocked = true end
+			end
+			if Vector2.new(x + 910, z + 1110).Magnitude < 75 or Vector2.new(x - 920, z + 1110).Magnitude < 50 then blocked = true end
 			for _, boss in Config.Bosses do
 				if Vector2.new(x - boss.X, z - boss.Z).Magnitude < 86 then blocked = true end
+			end
+			for _, waypoint in Config.Waypoints do
+				local point = waypoint.Position
+				if Vector2.new(x - point.x, z - point.z).Magnitude < 24 then blocked = true end
 			end
 			-- Wide approach lanes stay clear for simple Humanoid steering.
 			if math.abs(x - region.X) < 28 or math.abs(z - region.Z) < 23 then blocked = true end
@@ -334,6 +455,10 @@ function World.build()
 				pool.CanCollide = false
 				pool.CanQuery = false
 				crystal(zone, location + Vector3.new(4, 0, 3), random:NextNumber(1, 2))
+			elseif id == "frost" then
+				frostDecoration(zone, location, random)
+			elseif id == "desert" then
+				desertDecoration(zone, location, random)
 			else
 				local height = random:NextNumber(8, 23)
 				part(zone, "ObsidianSpire", Vector3.new(7, height, 7), location + Vector3.new(0, height / 2, 0), Color3.fromRGB(53, 48, 60), Enum.Material.Basalt)
@@ -343,8 +468,16 @@ function World.build()
 			end
 		end
 	end
+	-- Distinct landmarks outside combat clearings, reachable from the regional roads.
+	local glacier = part(folder, "FrozenLake", Vector3.new(110, 0.3, 74), Vector3.new(-910, 0.35, -1110), Color3.fromRGB(138, 199, 224), Enum.Material.Ice)
+	glacier.Transparency = 0.25
+	local oasis = disc(folder, "DesertOasis", Vector3.new(920, 0.38, -1110), 36, Color3.fromRGB(90, 178, 188), Enum.Material.Glass)
+	oasis.Transparency = 0.35
+	oasis.CanCollide = false
+	oasis.CanQuery = false
 	for id, definition in Config.Bosses do arena(folder, id, definition) end
 	local nodes = resourceNodes(folder)
+	local waypoints = travelShrines(folder)
 	local enemySpawns = {}
 	for id, region in Config.Regions do
 		for _, offset in {Vector3.new(-58, 0, 42), Vector3.new(52, 0, 37), Vector3.new(-74, 0, -27), Vector3.new(72, 0, -32)} do
@@ -352,13 +485,15 @@ function World.build()
 		end
 	end
 	-- Low-detail mountain ridges bound the walkable world.
-	for _, wall in {
-		{Vector3.new(1800, 80, 20), Vector3.new(0, 38, -1190)},
-		{Vector3.new(1800, 80, 20), Vector3.new(0, 38, 390)},
-		{Vector3.new(20, 80, 1600), Vector3.new(-890, 38, -400)},
-		{Vector3.new(20, 80, 1600), Vector3.new(890, 38, -400)},
-	} do
-		part(folder, "MountainRidge", wall[1], wall[2], palette.forest, Enum.Material.Rock)
+	for x = bounds.MinX, bounds.MaxX - 1, 1000 do
+		for _, z in {bounds.MinZ + 10, bounds.MaxZ - 10} do
+			part(folder, "MountainRidge", Vector3.new(1000, 80, 20), Vector3.new(x + 500, 38, z), palette.forest, Enum.Material.Rock)
+		end
+	end
+	for z = bounds.MinZ, bounds.MaxZ - 1, 800 do
+		for _, x in {bounds.MinX + 10, bounds.MaxX - 10} do
+			part(folder, "MountainRidge", Vector3.new(20, 80, 800), Vector3.new(x, 38, z + 400), palette.forest, Enum.Material.Rock)
+		end
 	end
 	local enemies = Instance.new("Folder")
 	enemies.Name = "Enemies"
@@ -370,6 +505,7 @@ function World.build()
 		Blacksmith = smith,
 		ForgePrompt = forgePrompt,
 		ResourceNodes = nodes,
+		Waypoints = waypoints,
 		EnemySpawns = enemySpawns,
 		EnemyFolder = enemies,
 		SafeZoneCenter = Vector3.zero,
@@ -430,14 +566,15 @@ end
 
 function World.createEnemy(folder, position, index, regionId)
 	local model = Instance.new("Model")
-	model.Name = "Orman Yaratığı " .. tostring(index)
+	local region = Config.Regions[regionId or "forest"] or Config.Regions.forest
+	model.Name = region.EnemyName .. " " .. tostring(index)
 	local base = position + Vector3.new(0, 3, 0)
 	local colors = regionColors[regionId or "forest"] or regionColors.forest
 	local skin = colors.skin
 	local root = part(model, "HumanoidRootPart", Vector3.new(2, 2, 1), base, skin)
 	root.Transparency = 1
 	root.CanCollide = false
-	local torso = part(model, "Torso", Vector3.new(2, 2, 1), base, palette.wood)
+	local torso = part(model, "Torso", Vector3.new(2, 2, 1), base, colors.ground)
 	local head = part(model, "Head", Vector3.new(2, 1, 1), base + Vector3.new(0, 1.5, 0), skin)
 	local function joint(name, p0, p1, offset)
 		local motor = Instance.new("Motor6D")
@@ -461,7 +598,7 @@ function World.createEnemy(folder, position, index, regionId)
 		eye.CanCollide = false
 	end
 	local humanoid = Instance.new("Humanoid")
-	humanoid.DisplayName = if regionId == "marsh" then "Sis Avcısı" elseif regionId == "volcanic" then "Köz Golemi" else "Orman Yaratığı"
+	humanoid.DisplayName = region.EnemyName
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
 	humanoid.HealthDisplayDistance = 70
 	humanoid.NameDisplayDistance = 70

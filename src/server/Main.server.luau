@@ -9,12 +9,15 @@ local Combat = require(ReplicatedStorage.Shared.Combat)
 local Campaign = require(ReplicatedStorage.Shared.Campaign)
 local PlayerActions = require(script.Parent.PlayerActions)
 local BossService = require(script.Parent.BossService)
+local PartyService = require(script.Parent.PartyService)
+local TravelService = require(script.Parent.TravelService)
+local PartyRules = require(ReplicatedStorage.Shared.PartyRules)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "PartyAction", "PartyState", "TravelRequest", "OpenTravel"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -30,6 +33,8 @@ local closing = false
 local lastEquip = {}
 local bossService
 local actions
+local partyService
+local travelService
 
 local function state(player)
 	local handle = profiles[player]
@@ -46,6 +51,7 @@ local function state(player)
 		expedition = table.clone(p.expedition), resource = resource, cooldowns = cooldowns, stats = Combat.stats(p, Config),
 		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
 		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
+		waypoints = table.clone(p.waypoints), travel = if travelService then travelService:snapshot(player) else nil,
 	})
 end
 local function livingCharacter(player)
@@ -101,6 +107,7 @@ remotes.RequestState.OnServerEvent:Connect(function(player, ...)
 	lastRequest[player] = now
 	state(player)
 	remotes.WorldState:FireClient(player, bossService:snapshot())
+	if partyService then remotes.PartyState:FireClient(player, partyService:snapshot(player)) end
 end)
 
 actions = PlayerActions.new(world, {
@@ -111,6 +118,28 @@ actions = PlayerActions.new(world, {
 	effect = function(payload) remotes.CombatEffect:FireAllClients(payload) end,
 })
 actions:connectGathering()
+partyService = PartyService.new({
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition,
+	state = function(player, snapshot) if player.Parent then remotes.PartyState:FireClient(player, snapshot) end end,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+})
+travelService = TravelService.new(world, {
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition,
+	combatInfo = function(player) return actions:combatInfo(player) end,
+	state = state, save = savePlayer,
+	open = function(player) remotes.OpenTravel:FireClient(player) end,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+	moved = function(player, root)
+		movement[player] = {position = root.Position, time = os.clock(), blockedUntil = os.clock() + 0.5}
+	end,
+})
+travelService:connect()
+remotes.PartyAction.OnServerEvent:Connect(function(player, action, targetId, ...)
+	if select("#", ...) == 0 then partyService:action(player, action, targetId) end
+end)
+remotes.TravelRequest.OnServerEvent:Connect(function(player, id, ...)
+	if select("#", ...) == 0 then travelService:request(player, id) end
+end)
 remotes.Attack.OnServerEvent:Connect(function(player, ...)
 	if select("#", ...) == 0 then actions:basic(player) end
 end)
@@ -159,20 +188,18 @@ local function spawnEnemy(position, index, regionId)
 		enemies[model] = nil
 		local player = info.lastAttacker
 		if player and profiles[player] then
-			if regionId == "forest" then
-				Progression.recordKill(profiles[player].data, Config)
-			else
-				local profile = profiles[player].data
-				profile.kills += 1
-				profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, Config.KillXP * region.EnemyLevel)
-			end
-			local profile = profiles[player].data
-			local material = ({forest = "wood", marsh = "iron", volcanic = "ember"})[regionId]
-			if material then profile.materials[material] = math.min(100000000, profile.materials[material] + 1) end
-			Campaign.recordKill(profile, regionId, Config)
-			state(player)
-			if profiles[player].data.questStatus == "return" then
-				remotes.Notify:FireClient(player, "Hedef tamamlandı! Köydeki bilgeye dön.")
+			local recipients = {player}
+			for _, member in partyService:assists(player, root.Position) do table.insert(recipients, member) end
+			for _, recipient in recipients do
+				local profile = profiles[recipient].data
+				local wasReady = profile.questStatus == "return"
+				local xp = PartyRules.rewardXP(Config.KillXP * region.EnemyLevel, recipient ~= player, Config)
+				Progression.recordRegionKill(profile, regionId, xp, Config)
+				Campaign.recordKill(profile, regionId, Config)
+				state(recipient)
+				if not wasReady and profile.questStatus == "return" then
+					remotes.Notify:FireClient(recipient, "Hedef tamamlandı! Köydeki bilgeye dön.")
+				end
 			end
 		end
 		task.delay(3, function() model:Destroy() end)
@@ -204,6 +231,8 @@ task.spawn(function()
 				end
 			else movement[player] = nil end
 		end
+		partyService:update()
+		travelService:update()
 		for model, info in enemies do
 			local root = model:FindFirstChild("HumanoidRootPart")
 			local humanoid = model:FindFirstChildOfClass("Humanoid")
@@ -257,6 +286,7 @@ local function playerAdded(player)
 	player:SetAttribute("EquippedPet", handle.data.equippedPet or "")
 	state(player)
 	remotes.WorldState:FireClient(player, bossService:snapshot())
+	partyService:push()
 end
 Players.PlayerAdded:Connect(playerAdded)
 for _, player in Players:GetPlayers() do task.spawn(playerAdded, player) end
@@ -264,6 +294,8 @@ Players.PlayerRemoving:Connect(function(player)
 	profiles[player] = nil
 	lastEquip[player] = nil
 	actions:remove(player)
+	travelService:remove(player)
+	partyService:remove(player)
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)

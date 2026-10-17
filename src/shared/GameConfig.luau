@@ -1,5 +1,16 @@
 -- Pure shared data: no Roblox globals. Loot decisions remain on the server.
 return table.freeze({
+	MapBounds = {MinX = -1500, MaxX = 1500, MinZ = -1900, MaxZ = 500},
+	Party = {MaxMembers = 4, InviteDuration = 30, RewardRadius = 100, AssistXPFactor = 0.7},
+	Travel = {SourceRange = 16, CombatLock = 10, ChannelDuration = 3, MaxChannelMovement = 3},
+	Waypoints = {
+		village = {Name = "Güvenli Köy", RegionId = "village", Position = {x = -5, y = 0, z = 35}},
+		forest = {Name = "Orman Türbesi", RegionId = "forest", Position = {x = -190, y = 0, z = -140}},
+		marsh = {Name = "Bataklık Türbesi", RegionId = "marsh", Position = {x = 220, y = 0, z = -215}},
+		volcanic = {Name = "Köz Türbesi", RegionId = "volcanic", Position = {x = 18, y = 0, z = -630}},
+		frost = {Name = "Buzul Türbesi", RegionId = "frost", Position = {x = -700, y = 0, z = -835}},
+		desert = {Name = "Vaha Türbesi", RegionId = "desert", Position = {x = 730, y = 0, z = -790}},
+	},
 	ResourceMax = 100, ResourceRegen = 8,
 	Classes = {
 		warrior = {Name = "Savaşçı", MaxHealth = 140, BasicDamage = 25, BasicRange = 11},
@@ -25,6 +36,8 @@ return table.freeze({
 		{Name = "Bataklık Seferi", Description = "5 bataklık düşmanını yen", RegionId = "marsh", Target = 5, XP = 175, Gold = 75, Materials = {wood = 8, iron = 5, ember = 0}},
 		{Name = "Köz Seferi", Description = "5 köz düşmanını yen", RegionId = "volcanic", Target = 5, XP = 250, Gold = 150, Materials = {wood = 10, iron = 8, ember = 6}},
 		{Name = "Ufukların Koruyucusu", Description = "En az 3 isabet ve %1 hasarla bir dünya bossunu yen", Target = 1, XP = 400, Gold = 250, Materials = {wood = 5, iron = 5, ember = 5}},
+		{Name = "Buzul Sınırı", Description = "8 buzul yaratığını yen", RegionId = "frost", Target = 8, XP = 600, Gold = 175, Materials = {wood = 0, iron = 12, ember = 0}},
+		{Name = "Güneşin İzinde", Description = "8 çöl yaratığını yen", RegionId = "desert", Target = 8, XP = 800, Gold = 225, Materials = {wood = 0, iron = 0, ember = 12}},
 	},
 	QuestTarget = 3, QuestXP = 75, QuestGold = 25, KillXP = 10,
 	AttackDamage = 25, AttackRange = 11, AttackCooldown = 0.55,
@@ -34,9 +47,11 @@ return table.freeze({
 	EnemyRespawnSeconds = 8,
 	SafeZoneRadius = 65,
 	Regions = {
-		forest = {Name = "Fısıltı Ormanı", X = -230, Z = -240, Radius = 200, EnemyLevel = 1, EnemyHealth = 90, EnemyDamage = 10},
-		marsh = {Name = "Sisli Bataklık", X = 260, Z = -330, Radius = 215, EnemyLevel = 3, EnemyHealth = 150, EnemyDamage = 14},
-		volcanic = {Name = "Köz Yaylası", X = 0, Z = -760, Radius = 230, EnemyLevel = 5, EnemyHealth = 210, EnemyDamage = 18},
+		forest = {Name = "Fısıltı Ormanı", X = -230, Z = -240, Radius = 200, EnemyLevel = 1, EnemyHealth = 90, EnemyDamage = 10, EnemyName = "Orman Yaratığı", Material = "wood", Ground = "Grass"},
+		marsh = {Name = "Sisli Bataklık", X = 260, Z = -330, Radius = 215, EnemyLevel = 3, EnemyHealth = 150, EnemyDamage = 14, EnemyName = "Sis Avcısı", Material = "iron", Ground = "Grass"},
+		volcanic = {Name = "Köz Yaylası", X = 0, Z = -760, Radius = 230, EnemyLevel = 5, EnemyHealth = 210, EnemyDamage = 18, EnemyName = "Köz Golemi", Material = "ember", Ground = "Basalt"},
+		frost = {Name = "Buzul Çamlığı", X = -760, Z = -1020, Radius = 300, EnemyLevel = 8, EnemyHealth = 300, EnemyDamage = 22, EnemyName = "Buz Muhafızı", Material = "iron", Ground = "Snow"},
+		desert = {Name = "Güneş Kırığı Çölü", X = 790, Z = -990, Radius = 315, EnemyLevel = 11, EnemyHealth = 390, EnemyDamage = 26, EnemyName = "Kum Bekçisi", Material = "ember", Ground = "Sand"},
 	},
 	BossOrder = {"thornwarden", "tide_sentinel", "ember_drake"},
 	Bosses = {

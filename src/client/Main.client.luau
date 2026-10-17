@@ -44,7 +44,8 @@ end
 
 local stats = panel(UDim2.fromOffset(270, 155), UDim2.fromOffset(12, 12))
 label(stats, "AETHERIA", UDim2.fromOffset(14, 8), UDim2.new(1, -28, 0, 25), 23, colors.gold)
-label(stats, "ORMAN MUHAFIZLARI", UDim2.fromOffset(15, 33), UDim2.new(1, -28, 0, 18), 11, colors.muted)
+local regionLabel = label(stats, "GÜVENLİ KÖY", UDim2.fromOffset(15, 33), UDim2.new(1, -28, 0, 18), 11, colors.muted)
+require(script.Parent:WaitForChild("BiomeAmbience")).start(regionLabel)
 local healthText = label(stats, "Can • —", UDim2.fromOffset(14, 56), UDim2.new(1, -28, 0, 20))
 local healthFill = bar(stats, 80, colors.health)
 local xpText = label(stats, "Seviye —  •  XP —", UDim2.fromOffset(14, 92), UDim2.new(1, -28, 0, 20))
@@ -80,6 +81,8 @@ local function resize()
 	if viewport.X <= 0 or viewport.Y <= 0 then viewport = camera.ViewportSize end
 	local scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 680), 0.58, 1)
 	for _, item in pairs(scales) do item.Scale = scale end
+	hint.Visible = true
+	attackButton.Size = UDim2.fromOffset(112, 76)
 	quest.Position = UDim2.fromOffset(12, 24 + 155 * scale)
 	local eventScale = math.clamp(math.min(viewport.X / 780, viewport.Y / 650), 0.54, 1)
 	local toastTop = viewport.X < 480 and (60 + 287 * scale + 264 * eventScale) or 12
@@ -87,7 +90,7 @@ local function resize()
 	toast.Position = viewport.X < 480 and UDim2.fromOffset(12, toastTop) or UDim2.new(0.5, 0, 0, toastTop)
 	attackButton.Position = viewport.Y < 450 and viewport.X > viewport.Y
 		and UDim2.new(1, -140, 1, -70) or UDim2.new(1, -24, 1, -155)
-	if UserInputService.TouchEnabled then
+	if UserInputService.TouchEnabled or viewport.X < 700 or viewport.Y < 450 then
 		hint.Visible = false
 		scales[attackButton].Scale = 1
 		attackButton.Size = UDim2.fromOffset(72, 48)

@@ -14,10 +14,10 @@ function Progression.addXP(level: number, xp: number, amount: number): (number, 
 end
 
 function Progression.newProfile()
-	return {version = 3, level = 1, xp = 0, gold = 0, kills = 0,
+	return {version = 4, level = 1, xp = 0, gold = 0, kills = 0,
 		questStatus = "available", questKills = 0, hasCrystal = false,
 		pets = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
-		materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
+		waypoints = {village = true}, materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
 end
 
 function Progression.sanitize(raw: any)
@@ -50,14 +50,17 @@ function Progression.sanitize(raw: any)
 		profile.bossVictories[id] = bounded(if type(raw.bossVictories) == "table" then raw.bossVictories[id] else nil, 100000000)
 		profile.lastBossClaims[id] = bounded(if type(raw.lastBossClaims) == "table" then raw.lastBossClaims[id] else nil, 1000000000000)
 	end
+	for _, id in {"forest", "marsh", "volcanic", "frost", "desert"} do
+		if type(raw.waypoints) == "table" and raw.waypoints[id] == true then profile.waypoints[id] = true end
+	end
 	if raw.classId == "mage" then profile.classId = "mage" end
 	profile.equipmentTier = bounded(raw.equipmentTier, 3)
 	for _, id in {"wood", "iron", "ember"} do
 		profile.materials[id] = bounded(if type(raw.materials) == "table" then raw.materials[id] else nil, 100000000)
 	end
 	if type(raw.expedition) == "table" then
-		profile.expedition.stage = math.max(1, bounded(raw.expedition.stage, 5))
-		local target = if profile.expedition.stage <= 3 then 5 elseif profile.expedition.stage == 4 then 1 else 0
+		profile.expedition.stage = math.max(1, bounded(raw.expedition.stage, 7))
+		local target = if profile.expedition.stage <= 3 then 5 elseif profile.expedition.stage == 4 then 1 elseif profile.expedition.stage <= 6 then 8 else 0
 		profile.expedition.progress = bounded(raw.expedition.progress, target)
 	end
 	return profile
@@ -75,6 +78,22 @@ function Progression.recordKill(profile, config)
 		profile.questKills = math.min(config.QuestTarget, profile.questKills + 1)
 		if profile.questKills >= config.QuestTarget then profile.questStatus = "return" end
 	end
+end
+
+-- Normal kills and nearby party assists use the same atomic progression path.
+function Progression.recordRegionKill(profile, regionId, xp, config)
+	local region = config.Regions[regionId]
+	if not region or type(xp) ~= "number" or xp ~= xp or xp < 0 or xp == math.huge then return false end
+	profile.kills += 1
+	profile.level, profile.xp = Progression.addXP(profile.level, profile.xp, xp)
+	if regionId == "forest" and profile.questStatus == "active" then
+		profile.questKills = math.min(config.QuestTarget, profile.questKills + 1)
+		if profile.questKills >= config.QuestTarget then profile.questStatus = "return" end
+	end
+	if region.Material and profile.materials[region.Material] then
+		profile.materials[region.Material] = math.min(100000000, profile.materials[region.Material] + 1)
+	end
+	return true
 end
 
 -- Synchronous transition: repeated interactions cannot award the same turn-in twice.

@@ -1,6 +1,6 @@
 # Aetheria · Ufuklar
 
-Roblox için fantastik açık dünya MMORPG prototipi. Güvenli köyden yollarla bağlı üç bölgeye çık, seviye kazan, saatlik world bosslara katıl ve nadir pet koleksiyonunu oluştur. Dünya sunucu açılışında parçalarla üretilir; dış model, ses, API anahtarı veya varlık yüklemesi gerekmez.
+Roblox için fantastik açık dünya MMORPG prototipi. Güvenli köyden yollarla bağlı beş biyoma çık, arkadaşlarınla grup kur, seviye kazan, saatlik world bosslara katıl ve nadir pet koleksiyonunu oluştur. Dünya sunucu açılışında parçalarla üretilir; dış model, ses, API anahtarı veya varlık yüklemesi gerekmez.
 
 ## Oyna
 
@@ -13,12 +13,27 @@ Roblox için fantastik açık dünya MMORPG prototipi. Güvenli köyden yollarla
 5. Bir yaratığa yaklaş; **sol tık / F** ile saldır. Üç orman yaratığını yendikten sonra Eldrin'e dön ve aynı etkileşimle ödülünü al.
 6. Boss takvimini izle, haritadaki ◆ işaretine git ve diğer oyuncularla bossu yen. **P** ile pet koleksiyonunu açıp kazandığın peti tak.
 7. **C** ile karakterini aç: köyde sınıf seç, sefer ödüllerini al ve Borin'in yanında donanımını yükselt. **Q/R** aktif yeteneklerindir.
+8. **G** ile arkadaşlarını dört kişilik gruba davet et. Bir türbenin yanına gidip **E** ile keşfet; **M** haritasından keşfettiğin başka bir türbeye seyahat et.
 
 GitHub üzerinde **Actions → Validate and build Roblox place** iş akışı, her push için kontrolleri ve oyun derlemesini çalıştırır. Başarılı çalışmanın **Aetheria-place** çıktısını indirip ZIP içindeki `Aetheria.rbxlx` dosyasını Studio'da açabilirsin. Bu iş akışı oyunu Roblox'a yayımlamaz.
 
-Mobilde varsayılan Roblox hareket/atlama kontrolleri, **SALDIR**, iki yetenek, **PET**, **HARİTA**, **KARAKTER** düğmeleri ve NPC/kaynak etkileşim simgesi kullanılır. Gamepad'de saldırı **R2**, yetenekler **L1/R1**, NPC etkileşimi **X**, petler **Y**, harita **L3**, karakter **D-pad yukarı**'dır. Panel **Escape/B** ile kapanır. En yakın menzil içi hedef seçilir; hasar ve ödülleri sunucu belirler.
+Mobilde varsayılan Roblox hareket/atlama kontrolleri, **SALDIR**, iki yetenek, **PET**, **HARİTA**, **KARAKTER**, **GRUP** düğmeleri ve etkileşim simgesi kullanılır. Gamepad'de saldırı **R2**, yetenekler **L1/R1**, NPC etkileşimi **X**, petler **Y**, harita **L3**, karakter **D-pad yukarı**, grup **D-pad sol**'dur. Panel **Escape/B** ile kapanır. En yakın menzil içi hedef seçilir; hasar ve ödülleri sunucu belirler.
 
-Orman yaratıkları 10 XP, bataklık yaratıkları 30 XP, köz yaratıkları 50 XP verir. Başlangıç görevi yalnız orman yaratıklarıyla ilerler; ödülü 75 XP, 25 altın ve çantada gösterilen tek orman kristalidir. Kristal petlerden ayrı bir görev ödülüdür. Eldrin'le tekrar konuşarak görev yenilenebilir. Güvenli köy bölgesinde saldırı yapılmaz; normal canavarlar yeniden doğar.
+Orman yaratıkları 10 XP, bataklık yaratıkları 30 XP, köz yaratıkları 50 XP, buzul yaratıkları 80 XP, çöl yaratıkları 110 XP verir. Başlangıç görevi yalnız orman yaratıklarıyla ilerler; ödülü 75 XP, 25 altın ve çantada gösterilen tek orman kristalidir. Kristal petlerden ayrı bir görev ödülüdür. Eldrin'le tekrar konuşarak görev yenilenebilir. Güvenli köy bölgesinde saldırı yapılmaz; normal canavarlar yeniden doğar.
+
+## Genişleyen dünya
+
+Harita **3.000 × 2.400 stud** boyutunda; ilk 1.800 × 1.600 haritanın 2,5 katı alan sunar. Zemin Roblox parça boyutu sınırına uygun dokuz parçaya bölünür. Bağlantı yolları ve türbe çevreleri dekorlardan arındırılır. Beş biyomda toplam **20 normal yaratık**, **25 toplama noktası** ve köyle birlikte **6 seyahat türbesi** vardır.
+
+| Biyom | Önerilen seviye | Yaratık | Malzeme | Ayırt edici çevre |
+|---|---:|---|---|---|
+| Fısıltı Ormanı | 1 | Orman Yaratığı | Odun | Ağaçlar, kök arenaları |
+| Sisli Bataklık | 3 | Sis Avcısı | Demir | Sığ büyülü göletler, kristaller |
+| Köz Yaylası | 5 | Köz Golemi | Köz | Obsidyen sütunları, kor damarları |
+| Buzul Çamlığı | 8 | Buz Muhafızı | Demir | Karlı çamlar, buz çıkıntıları, donmuş göl |
+| Güneş Kırığı Çölü | 11 | Kum Bekçisi | Köz | Kaktüsler, kumtaşı kalıntıları, vaha |
+
+Köyün kuzeyindeki kavşaktan batıya giderek buzula, doğuya giderek çöle ulaşılır. Bölgeye girince HUD adı ve önerilen seviyeyi gösterir; hafif ekran renk geçişi o oyuncunun biyomuna uyum sağlar. Yeni bölgeler normal yaratık, toplama, sefer ve keşif içeriği ekler; saatlik pet bossları aşağıdaki üç bölgede kalır.
 
 ## Dünya bossları ve petler
 
@@ -49,9 +64,9 @@ Yeni karakter **Savaşçı** olarak başlar. **C → Karakter** panelinden güve
 
 Enerji en fazla **100**, yenilenme saniyede **8**'dir. Temel saldırı enerji harcamaz. Geçerli hedef yoksa, hedef duvar arkasındaysa veya iyileştirmede can zaten doluysa yetenek enerji/bekleme süresi tüketmez. Hasar, enerji, hedef görüş hattı ve zamanlar sunucuda doğrulanır. Kılıç darbesi, büyü ışını, alan halkası ve iyileştirme görselleri yalnız sunucunun kabul ettiği eylemlerde gösterilir.
 
-**Sefer günlüğü**, Eldrin'in tekrarlanan 3 yaratık görevinden ayrıdır. Sırayla **5 orman yaratığı → 5 bataklık yaratığı → 5 köz yaratığı → 1 uygun katılımlı world boss** ister. Her aşamanın ödülünü C panelinden alarak bir sonraki aşamayı açarsın; daha erken yapılan sonraki bölge öldürmeleri geriye dönük sayılmaz. Her aşama bir kez ödül verir. İlk üç seferin altın/malzeme ödülleri, ilgili sıradaki donanım tarifini karşılar.
+**Sefer günlüğü**, Eldrin'in tekrarlanan 3 yaratık görevinden ayrıdır. Sırayla **5 orman → 5 bataklık → 5 köz yaratığı → 1 uygun katılımlı world boss → 8 buzul → 8 çöl yaratığı** ister. Her aşamanın ödülünü C panelinden alarak bir sonraki aşamayı açarsın; daha erken yapılan sonraki bölge öldürmeleri geriye dönük sayılmaz. Her aşama bir kez ödül verir. İlk üç seferin altın/malzeme ödülleri, ilgili sıradaki donanım tarifini karşılar. Eski dört aşamalı seferi bitiren karakterler beşinci aşamadan devam eder.
 
-Haritada her bölgede beş toplama noktası vardır. Odun, demir ve köz cevherine yaklaş, **E** tutarak topla. Bir nokta aynı oyuncu için 30 saniyede yenilenir; diğer oyuncunun hakkını tüketmez. Normal yaratıklar da kendi bölgelerinin malzemesinden bir adet verir.
+Haritada her bölgede beş toplama noktası vardır. Kaynağa yaklaş, **E** tutarak topla. Bir nokta aynı oyuncu için 30 saniyede yenilenir; diğer oyuncunun hakkını tüketmez. Normal yaratıklar da kendi bölgelerinin malzemesinden bir adet verir. Buzul demiri mevcut demir, güneş cevheri mevcut köz stokuna eklenir.
 
 Köyde **Borin**'e yaklaş ve E kullan veya C panelinden **Yükselt** seç. Yalnız sıradaki kademe üretilir; malzeme veya altın eksikse hiçbir ödeme alınmaz.
 
@@ -62,6 +77,16 @@ Köyde **Borin**'e yaklaş ve E kullan veya C panelinden **Yükselt** seç. Yaln
 | 3 · Aether | 10 odun, 8 demir, 6 köz, 150 altın | +15 hasar, +35 maksimum can |
 
 Bonuslar kademeler arasında üst üste eklenmez. Seviye ve kuşanılan petin hasar katkısı ayrıca uygulanır. Tarife ve sınıfa göre görünüm güncellenir.
+
+## Grup ve keşif seyahati
+
+**G → Grup** panelinde aynı sunucudaki oyunculara davet gönderilir. Davet 30 saniye geçerlidir; oyuncu kabul edince katılır. Bir grupta en fazla dört oyuncu bulunur. Lider üye çıkarabilir; herkes ayrılabilir. Lider ayrıldığında kalan ilk üye lider olur. Grup ve davetler o sunucu oturumuna aittir; tekrar girişte yeniden kurulur.
+
+Normal yaratığın son vuruşunu yapan oyuncu tam XP alır. Aynı grupta, yaratığın ölüm noktasına en fazla **100 stud** uzaklıkta ve hayatta olan üyeler temel XP'nin **%70**'ini alır. Bu oyuncuların uygun bölge görevleri/seferleri ilerler ve her biri bir bölge malzemesi kazanır. Ölü veya uzaktaki üyelere paylaşım yapılmaz. **World boss ve nadir pet ödüllerinde herkesin kişisel 3 vuruş ve %1 hasar şartı sürer.**
+
+Köyde ve beş biyomun her birinde birer seyahat türbesi vardır. Köy başlangıçta açıktır; diğer türbeler yanlarına yürüyüp **E** kullanılarak keşfedilir. Keşifler karakter kaydında saklanır. Bir türbenin **16 stud** yakınından, **M → Harita** panelinde keşfedilmiş başka bir hedef seçilir. Ücret alınmaz. Küçük türbe platformları streaming sırasında da mevcut tutularak varışta zemin sağlar.
+
+Seyahat için hayatta olmak ve en az **10 saniye** savaş dışında kalmak gerekir. **3 saniyelik** hazırlık sırasında 3 stud'dan fazla hareket etmek, hasar almak veya ölmek işlemi iptal eder. Hedef konumu sunucu seçer; seyahat enerji, yetenek bekleme süresi veya grup üyeliğini sıfırlamaz.
 
 ## Bulut araçları ve kontroller
 
@@ -75,7 +100,7 @@ bash scripts/check.sh
 
 Kurulum, resmi GitHub sürümlerinden **Rojo 7.7.1** ve **Luau 0.743** indirir; yayınlanan SHA-256 değerlerini doğruladıktan sonra `/workspace/.tools/aetheria/bin` altına kurar. Tekrar çalıştırma doğrulanmış indirme önbelleğini kullanır. Farklı araç konumu için `AETHERIA_TOOLS_DIR` değişkeni desteklenir. Python'un TLS doğrulaması açık kalır; checksum uyuşmazlığı kurulumu durdurur.
 
-`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler, Roblox'a bağlı olmayan ortak mantıkta tür analizini ve üç test paketini çalıştırır, ardından Studio oyun dosyasını üretir. İlerleme paketinde 34, boss/pet paketinde 166, savaş/sefer/üretim paketinde 133 doğrulama vardır (toplam 333). Server/client dosyalarının Roblox API türleri bu bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
+`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler, Roblox'a bağlı olmayan ortak mantıkta tür analizini ve dört test paketini çalıştırır, ardından Studio oyun dosyasını üretir. İlerleme paketinde 34, boss/pet paketinde 166, savaş/sefer/üretim paketinde 143, grup/seyahat/dünya paketinde 185 doğrulama vardır (toplam 528). Server/client dosyalarının Roblox API türleri bu bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
 
 ### Windows: GitHub deposunu Roblox Studio'ya bağla
 
@@ -141,19 +166,21 @@ Bulutta çalışan Rojo sunucusuna bilgisayarındaki Studio'nun doğrudan erişe
 - `src/server/Main.server.luau`: düşman AI, görev etkileşimi ve oyuncu yaşam döngüsü.
 - `src/server/PlayerActions.luau`: sınıf, yetenek, menzil/enerji doğrulaması, üretim ve toplama etkileşimleri.
 - `src/server/BossService.luau`: gerçek saatli boss yaşam döngüsü, katılım ve kişisel ödül entegrasyonu.
+- `src/server/PartyService.luau`: oturum grupları, davetler ve yakındaki üyelerin ödül paylaşımı.
+- `src/server/TravelService.luau`: türbe keşfi, savaş/hareket kontrolü ve güvenli seyahat.
 - `src/server/ProfileStore.luau`: Studio oturum verisi ve yayınlanmış deneyimde DataStore kayıtları.
-- `src/shared/`: ayarlar, saf takvim, pet/ödül/savaş/üretim/sefer kuralları ve v3 profil geçişi.
-- `src/client/`: Türkçe HUD, karakter paneli, yetenek çubuğu, savaş efektleri, pet koleksiyonu, boss takvimi ve harita.
+- `src/shared/`: ayarlar, saf takvim, pet/ödül/savaş/üretim/sefer/grup/seyahat kuralları ve v4 profil geçişi.
+- `src/client/`: Türkçe HUD, karakter/grup paneli, yetenek çubuğu, savaş efektleri, biyom renk geçişleri, pet koleksiyonu, boss takvimi ve seyahat haritası.
 - `tests/`: otomatik ilerleme testleri ve Studio kontrol planı.
 
 ## Kayıt ve çok oyunculu test
 
 Studio'da kayıtlar bilinçli olarak **geçicidir**; API Services ayarını açmak bunu değiştirmez. Play oturumu yeniden başladığında yeni profil oluşturulur. Yayınlanmış deneyimde Roblox `DataStoreService` kullanılır; harici sunucu veya sohbetten paylaşılacak bir anahtar gerekmez. Kayıt yüklenemiyorsa oyuncu kabul edilmez; boş profil ile mevcut kayıt ezilmez. Kayıt sırasında oturum kilidi ve periyodik kaydetme kullanılır.
 
-Eski v1/v2 kayıtlarının seviye, XP, altın, görev, kristal, petler ve garanti sayaçları korunur. **Profil v3** sınıf, donanım kademesi, malzemeler ve sefer ilerlemesini ekler. Aynı `AetheriaProfiles_v1` DataStore adı kullanılır; geçiş için eski kayıtlar silinmez. İç içe koleksiyonlar kaydetme sırasında bağımsız kopyalanır. Enerji ve yetenek bekleme süreleri yalnız çalışan sunucunun oturum durumudur; aynı oturumda yeniden doğma/sınıf değişimiyle sıfırlanmaz.
+Eski v1/v2/v3 kayıtlarının seviye, XP, altın, görev, kristal, petler, garanti sayaçları, sınıfı, donanımı, malzemeleri ve sefer ilerlemesi korunur. **Profil v4** keşfedilen türbeleri ekler; köy her zaman açıktır. Aynı `AetheriaProfiles_v1` DataStore adı kullanılır; geçiş için eski kayıtlar silinmez. İç içe koleksiyonlar kaydetme sırasında bağımsız kopyalanır. Enerji, yetenek bekleme süreleri, grup ve devam eden seyahat yalnız çalışan sunucunun oturum durumudur; aynı oturumda yeniden doğma/sınıf değişimi enerji/bekleme süresini sıfırlamaz.
 
-Studio'nun çoklu istemci testinden iki oyuncu başlatıp görev, ölüm/yeniden doğma, boss katılımı ve pet kuşanmayı kontrol et. Kalıcılığı ayrı, yayınlanmış özel bir test deneyiminde çıkıp tekrar girerek doğrula. Ayrıntılı kontrol listesi: [tests/MANUAL.md](tests/MANUAL.md).
+Studio'nun çoklu istemci testinden dört oyuncu başlatıp grup, görev paylaşımı, ölüm/yeniden doğma, boss katılımı ve türbe seyahatini kontrol et. Kalıcılığı ayrı, yayınlanmış özel bir test deneyiminde çıkıp tekrar girerek doğrula. Ayrıntılı kontrol listesi: [tests/MANUAL.md](tests/MANUAL.md).
 
-Bu sürüm tek Roblox sunucusunda yollarla bağlı üç bölge sunar; streaming açıktır. Yayınlanmış sunucular aynı UTC takvimini kullanır, fakat boss canı ve karşılaşma durumu sunucular arasında ortak değildir. İki sınıfın sabit yetenekleri vardır; dallanan yetenek ağacı, lonca, oyuncu pazarı ve çok sunuculu kesintisiz bir dünya henüz yoktur. Yıldız tozu şu an yalnız koleksiyon sayacıdır; harcama sistemi yoktur. Hız/mesafe kontrolleri temel kötüye kullanım kontrolleridir; kapsamlı bir anti-cheat sistemi değildir.
+Bu sürüm tek Roblox sunucusunda yollarla bağlı beş biyom sunar; streaming açıktır. Yayınlanmış sunucular aynı UTC takvimini kullanır, fakat boss canı ve karşılaşma durumu sunucular arasında ortak değildir. İki sınıfın sabit yetenekleri vardır; dallanan yetenek ağacı, lonca, oyuncu pazarı ve çok sunuculu kesintisiz bir dünya henüz yoktur. Yıldız tozu şu an yalnız koleksiyon sayacıdır; harcama sistemi yoktur. Hız/mesafe kontrolleri temel kötüye kullanım kontrolleridir; kapsamlı bir anti-cheat sistemi değildir.
 
 Bulutta Luau mantığı, proje derlemesi ve Rojo eşitleme protokolü kontrol edilebilir. Roblox Studio/Linux desteği bulunmadığından gerçek oynanış, fizik, mobil arayüz ve canlı DataStore bu ortamda doğrulanmış sayılmaz.

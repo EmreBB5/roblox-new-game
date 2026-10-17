@@ -98,7 +98,13 @@ function CharacterHUD.create(gui, parent, remotes, make, label, button, colors, 
 	end
 	function self:resize(viewport)
 		scale.Scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 680), 0.58, 1)
-		if UserInputService.TouchEnabled then
+		hotbar.Size, hotbar.AnchorPoint = UDim2.fromOffset(248, 89), Vector2.new(0.5, 1)
+		hotbar.Position = UDim2.new(0.5, 0, 1, -72)
+		for index, slot in ipairs({"primary", "secondary"}) do
+			skills[slot].Position = UDim2.fromOffset(8 + (index - 1) * 120, 35)
+			skills[slot].Size = UDim2.fromOffset(112, 46)
+		end
+		if UserInputService.TouchEnabled or viewport.X < 700 or viewport.Y < 450 then
 			scale.Scale = 1
 			hotbar.Size = UDim2.fromOffset(200, 90)
 			local landscape = viewport.X > viewport.Y

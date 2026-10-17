@@ -54,3 +54,21 @@ Eldrin'in tekrarlanan öğretici görevine eklenen dört aşamalı sefer, her b�
 Borin'in üç kademeli tarifleri bütün gereksinimler kontrol edildikten sonra tek işlemde malzeme ve altın tüketir. Malzemeler bölge yaratıklarından ve oyuncu başına 30 saniye beklemeli 15 toplama noktasından gelir. Bunlar serbest oyuncu pazarı veya üretim ekonomisi simülasyonu değildir; malzeme toplama ve geliştirme döngüsünün ilk uygulamasıdır.
 
 Profil v3, v1/v2 ilerlemesini ve petleri korurken sınıf/kademe/malzeme/sefer alanlarını ekler. Bağımsız testler kaynak yenilenmesi, kesin cooldown sınırları, geçersiz hedefte harcama olmaması, bütün malzemeleri karşılamadan üretim yapılmaması, aşamaların tekrar ödül vermemesi ve iç içe profil alanlarının ayrık kopyasını doğrular. Gerçek Studio oynanışı, dokunma kontrolleri ve canlı DataStore kontrolü aynı manuel test planında ayrı durur.
+
+## Birlikte keşif sürümü: grup ve türbeler
+
+Dört kişilik grup, birlikte normal yaratık kesmeyi ödüllendirir. Davet karşı tarafın kabulünü gerektirir; 30 saniyede düşer. Bir oyuncu aynı anda tek grupta olur. Lider ayrıldığında kalan ilk üye liderliği alır. Grup sunucu oturumunda tutulur; lonca veya sunucular arası arkadaşlık sistemi değildir.
+
+Son vuruş tam XP verir. Aynı gruptaki canlı ve ölüm noktasından en fazla 100 stud uzaktaki üyeler %70 XP, bölge malzemesi ve uygun aktif görev/sefer ilerlemesi alır. Ödül oyuncu başına bir kez uygulanır. Boss katkısı bu paylaşıma dahil edilmez: pet şansı için kişisel üç kabul edilmiş vuruş ve %1 hasar hâlâ zorunludur. Bu sayede birlikte normal gelişim kolaylaşırken nadir koleksiyonun katılım şartı korunur.
+
+Altı seyahat türbesi, keşif ve sonradan geri dönme döngüsünü destekler. Köy başlangıçta açıktır; diğer noktalar fiziksel etkileşimle keşfedilir. Seyahat yalnız türbe yakınından keşfedilmiş bir başka noktaya, 10 saniye savaş dışındayken başlar. Üç saniyelik hazırlıkta hareket, hasar, ölüm veya karakter değişimi işlemi iptal eder. Sunucu hedef CFrame'ini seçer; meşru seyahatten sonra hareket doğrulama örneği yenilenir. Sınıf kaynakları ve cooldown'lar korunur.
+
+Profil v4 yalnız kalıcı keşif tablosunu ekler; v1/v2/v3 ilerlemesi aynı DataStore adında taşınır. Grup, davet ve devam eden seyahat kayda yazılmaz. Bu sürüm için ek oyun incelemesi yapılmadı; kurallar Aetheria'nın mevcut döngüsüne göre seçildi. Çoklu istemcide lider değişimi, paylaşım sınırları, seyahatin iptali ve streaming ile varış Studio test planına eklendi.
+
+## Genişleme: buzul ve çöl
+
+Dünya alanı 2,5 katına, 3.000×2.400 stud'a çıkarıldı. Tek dev zemin yerine dokuz zemin parçası Roblox'un 2.048 stud parça sınırını aşmadan yüzeyi kaplar. Beş biyomun her birinde dört normal yaratık ve beş toplama düğümü vardır. Batıdaki Buzul Çamlığı seviye 8, doğudaki Güneş Kırığı Çölü seviye 11 için önerilir; seviye bir giriş kilidi değildir.
+
+Karlı çamlar, buz sütunları ve donmuş göl; kaktüsler, kumtaşı sütunları ve vaha ile görsel fark oluşturur. Bölge adı ve önerilen seviye HUD'a yansır, yerel renk geçişi sadece bakan oyuncuyu etkiler. Rastgele dekorlar yol koridorlarından ve türbelerden uzak tutulur. Küçük seyahat platformları Persistent streaming modeli kullanır; uzak zeminin yüklenmesi sırasında varış noktasında bir taban bırakır.
+
+Seferin beşinci ve altıncı aşaması sekizer yeni bölge yaratığı ister. Önceki sürümün tamamlanmış işareti olan aşama 5, artık yeni seferin başlangıcıdır; eski ödüller tekrar alınmaz. Yeni düğümler mevcut demir ve köz stoklarını kullanır. Pet düşüren bosslar üç mevcut karşılaşmada kalır; yeni boss veya pet eklenmiş gibi gösterilmez. Canlı sunucu performansı ve fizik doğrulaması Studio/yayınlanmış test gerektirir.

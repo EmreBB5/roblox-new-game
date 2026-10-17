@@ -4,7 +4,7 @@ Bu senaryolar otomatik test sonucu değildir. Studio ve yayınlanmış özel tes
 
 1. **İlk giriş:** Oyunu başlat; Türkçe HUD, güvenli başlangıç alanı, NPC ve düşmanlar görünmeli. Görev henüz alınmadan öldürülen düşman görev ilerlemesi vermemeli.
 2. **Görev döngüsü:** NPC'ye yaklaş, görevi al, üç düşmanı yen ve NPC'ye dön. Sayaç doğru ilerlemeli; teslimde XP, altın ve ödül tam bir kez verilmeli. Tekrarlanan etkileşim aynı ödülü çoğaltmamalı.
-3. **İki oyuncu:** Studio `Start Server` ile iki istemci aç. Bir oyuncunun hasarı, görevi ve ödülü diğerine yanlış aktarılmamalı; düşman ölümü ve yeniden doğması iki istemcide tutarlı görünmeli.
+3. **İki oyuncu:** Studio `Start Server` ile iki istemci aç. Grup kurmadan bir oyuncunun normal yaratık ödülü diğerine aktarılmamalı; düşman ölümü ve yeniden doğması iki istemcide tutarlı görünmeli. Grup ödülleri aşağıdaki ayrı senaryoya göre paylaşılır.
 4. **Saldırı sınırları:** Düşmandan uzakta, ölüyken ve saldırı düğmesine hızla basarak dene. Mesafe ve bekleme süresi dışındaki girişler hasar vermemeli. İstemci tarafından gönderilen sahte hedef veya hasar değeri ödül sağlamamalı.
 5. **NPC güvenliği:** NPC'den uzakta görev etkileşimi göndermeyi ve görev tamamlanmadan teslimi dene. Sunucu isteği reddetmeli.
 6. **Düşman davranışı:** Düşmanı başlangıç noktasından uzaklaştır, güvenli alana çek ve oyuncuyu öldürt. Düşman belirlenen sınırda geri dönmeli; güvenli alanda hasar vermemeli; öldüğünde yalnızca bir kez yeniden doğmalı.
@@ -46,3 +46,18 @@ Bu kontroller de henüz Studio'da uygulanmış sayılmaz.
 5. Demirciden uzakta geliştirme isteği reddedilmeli. Eksik altın veya son kontrol edilen eksik malzemede hiçbir ödeme alınmamalı; yalnız sıradaki kademe yapılmalı. Üç kademeden sonra tekrar istek kaynak tüketmemeli. Stat ve silah görseli kademeyle güncellenmeli.
 6. Bir kaynak düğümünü topla; 30 saniye dolmadan aynı oyuncu yeniden alamamalı, başka oyuncu kendi hakkını kullanabilmeli. Uzaktan sahte ProximityPrompt tetikleme işe yaramamalı.
 7. Ayrı yayınlanmış testte sınıf, kademe, malzemeler ve sefer ilerlemesinin yeniden girişte korunduğunu doğrula. Eski v1/v2 kayıtların altını, XP'si, görevi, peti ve boss garanti sayacı korunmalı.
+
+## Grup, seyahat ve genişleyen biyomlar
+
+Bu senaryolar henüz gerçek Studio test sonucu değildir.
+
+1. **Grup daveti:** Beş istemci başlat. G ile davet gönder; kabul edilmeden katılım olmamalı. Yanlış davet kimliği, süresi dolmuş davet, tekrarlanan kabul, dört kişiden sonra beşinci katılım ve lider olmayanın davet/çıkarma isteği reddedilmeli. Davet alan mobil oyuncuda GRUP ! görünmeli; kabul/ret paneli kaydırılabilmeli.
+2. **Liderlik ve ayrılma:** Lider normal ayrılma ve bağlantı kopmasıyla ayrılsın; kalan ilk üye lider olsun. Çıkarılan oyuncunun üyeliği temizlensin. Son üye ayrılınca grup silinsin. Eski solo davetini gönderen başka gruba katılınca bu davet artık kabul edilememeli.
+3. **Normal ödül:** Aynı gruptaki üç oyuncudan biri son vuruş yapsın. Tam XP son vuruşa, canlı ve 100 stud içindeki üyelere %70 XP gitmeli; her alıcı tam bir malzeme ve uygun görev/sefer ilerlemesi almalı. Orman dışındaki öldürme Eldrin görevini ilerletmemeli. Ölü, uzaktaki, grupta olmayan ve güvenilmeyen konumdaki oyuncu paylaşım almamalı.
+4. **Boss istisnası:** Dört kişilik grupta yalnız iki oyuncu en az 3 isabet ve %1 hasar yapsın. Diğer iki üye yakında dursa bile boss XP/altın, sefer boss ilerlemesi ve pet şansı alamamalı.
+5. **Keşif:** Yeni profil yalnız köy türbesini açmalı. Beş biyomun türbelerine yürüyüp E kullan; her biri kişisel haritada açılsın. Uzaktan sahte prompt/RemoteEvent keşif açmamalı. Başka oyuncunun keşfi senin haritanı açmamalı.
+6. **Seyahat:** Türbe yakınında keşfedilmiş farklı hedef seç; 3 saniye sonunda platforma varılmalı. Aynı hedef, kilitli hedef, türbeden uzaklık, ölüm ve son 10 saniyede savaş reddedilmeli. Hazırlıkta 3 stud'dan fazla hareket, zıplama, hasar, saldırı, karakter değişimi ve çıkış işlemi iptal etmeli. Spam tek kanaldan fazla oluşturamamalı; eski gecikmiş hazırlık yeni karakteri taşımamalı.
+7. **Varış ve hareket:** Önceden görüntülenmemiş uzak türbeye git. Platform/zemin yüklenirken düşme, anti-teleport tarafından geri çekilme veya duvar içine doğma olmamalı. Enerji, yetenek cooldown'ları ve grup korunmalı. Varış koruması 3 saniyede kalkmalı.
+8. **Yeni biyomlar:** Kuzey kavşağından buzula ve çöle yürü; yollar dekorla kapanmamalı. Buzulda kar, çam, donmuş göl; çölde kaktüs, harabe, vaha görünmeli. HUD isim/seviye ve yerel renk geçişi doğru değişmeli; farklı biyomdaki ikinci oyuncunun renkleri etkilenmemeli. Dokuz zemin parçasının sınırlarında düşme veya boşluk olmamalı.
+9. **Yeni gelişim:** Buzul yaratığı 80 XP/demir, çöl yaratığı 110 XP/köz vermeli. Beşinci/altıncı sefer sekiz doğru bölge yaratığı ile tamamlanmalı; erken kesimler ve boss bu aşamaları ilerletmemeli. Önceden dört aşamayı tamamlamış v3 profil beşinciden başlamalı; eski ödüller tekrar verilmemeli.
+10. **Arayüz ve kayıt:** 320×568 dikey ve 568×320 yatay cihazları safe-area ile dene. Grup/harita/pet/karakter panelleri kaymalı; ana menü, seyahat, davet kabul/ret ve kapat düğmeleri kullanılabilir kalmalı. Gamepad D-pad sol/yukarı, L3, Y, B ile menüleri dene. Ayrı özel deneyimde keşifler yeniden girişte korunmalı; grup ve devam eden seyahat korunmamalı.

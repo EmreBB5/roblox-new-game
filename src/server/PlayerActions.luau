@@ -17,10 +17,15 @@ function Actions:runtime(player)
 	if not runtime then
 		runtime = Combat.newRuntime(now())
 		runtime.lastCombat = -math.huge
+		runtime.lastDamage = -math.huge
 		runtime.lastAction = {}
 		self.runtimes[player] = runtime
 	end
 	return runtime
+end
+function Actions:combatInfo(player)
+	local runtime = self.runtimes[player]
+	return if runtime then runtime.lastCombat else -math.huge, if runtime then runtime.lastDamage else -math.huge
 end
 function Actions:gate(player, action)
 	if not self.callbacks.profiles[player] then return false end
@@ -172,15 +177,20 @@ function Actions:connectGathering()
 end
 function Actions:characterAdded(player, character)
 	local humanoid = character:WaitForChild("Humanoid", 10)
-	if not humanoid then return end
+	if not humanoid or player.Character ~= character or not player.Parent then return end
 	self:applyStats(player)
 	local previous = humanoid.Health
-	humanoid.HealthChanged:Connect(function(health)
-		if health < previous then self:runtime(player).lastCombat = now() end
+	local runtime = self:runtime(player)
+	if runtime.healthConnection then runtime.healthConnection:Disconnect() end
+	runtime.healthConnection = humanoid.HealthChanged:Connect(function(health)
+		if player.Character ~= character or not player.Parent then return end
+		if health < previous then runtime.lastCombat, runtime.lastDamage = now(), now() end
 		previous = health
 	end)
 end
 function Actions:remove(player)
+	local runtime = self.runtimes[player]
+	if runtime and runtime.healthConnection then runtime.healthConnection:Disconnect() end
 	self.runtimes[player], self.nodes[player] = nil, nil
 end
 return Actions

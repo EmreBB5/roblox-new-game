@@ -9,7 +9,7 @@ local function eq(actual, expected, label)
 	assert(actual == expected, label .. ": expected " .. tostring(expected) .. ", got " .. tostring(actual))
 end
 local p = Progression.newProfile()
-eq(p.version, 3, "new profile v3")
+eq(p.version, 4, "new profile v4")
 eq(Combat.stats(p, Config).maxHealth, 140, "warrior health")
 eq(Combat.stats(p, Config).basicRange, 11, "warrior melee range")
 p.classId = "mage"
@@ -93,7 +93,18 @@ Campaign.recordBoss(campaign, Config)
 Campaign.recordBoss(campaign, Config)
 eq(campaign.expedition.progress, 1, "eligible boss objective capped")
 eq(Campaign.claim(campaign, Config).status, "rewarded", "boss objective reward")
-eq(campaign.expedition.stage, 5, "campaign completed marker")
+eq(campaign.expedition.stage, 5, "boss unlocks frontier expedition")
+for stage = 5, 6 do
+	local regionId = Config.Expedition[stage].RegionId
+	Campaign.recordBoss(campaign, Config)
+	Campaign.recordKill(campaign, "forest", Config)
+	eq(campaign.expedition.progress, 0, "frontier objective excludes boss and old regions")
+	for _ = 1, 10 do Campaign.recordKill(campaign, regionId, Config) end
+	eq(campaign.expedition.progress, 8, "frontier objective capped")
+	eq(Campaign.claim(campaign, Config).status, "rewarded", "frontier stage reward")
+	eq(campaign.expedition.stage, stage + 1, "frontier manual advancement")
+	eq(Campaign.claim(campaign, Config).status, stage == 6 and "completed" or "incomplete", "frontier reward cannot be replayed")
+end
 local finalGold = campaign.gold
 eq(Campaign.claim(campaign, Config).status, "completed", "completed campaign cannot claim again")
 eq(campaign.gold, finalGold, "completed claim no extra currency")
@@ -131,7 +142,7 @@ eq(overflow.materials.wood, 100000000, "material reward bounded")
 
 local old = Progression.sanitize({version = 2, level = 7, xp = 18, gold = 123, questStatus = "return", questKills = 3,
 	pets = {tidefin = true}, equippedPet = "tidefin", petPity = {thornwarden = 17}, bossVictories = {thornwarden = 20}, lastBossClaims = {thornwarden = 1800000000}, stardust = 10})
-eq(old.version, 3, "v2 migration version")
+eq(old.version, 4, "v2 migration version")
 eq(old.level, 7, "v2 migration level")
 eq(old.xp, 18, "v2 migration XP")
 eq(old.gold, 123, "v2 migration gold")
@@ -174,7 +185,7 @@ eq(cleanRuntime.resource, 100, "unknown class no spending")
 cleanRuntime.cooldowns.primary = 0/0
 eq(Combat.use(Progression.newProfile(), cleanRuntime, "primary", 1, true, Config).status, "invalid", "nonfinite cooldown rejected")
 eq(pcall(function() Combat.newRuntime(math.huge) end), false, "nonfinite runtime creation rejected")
-local complete = Progression.sanitize({expedition = {stage = 5, progress = 999}})
+local complete = Progression.sanitize({expedition = {stage = 7, progress = 999}})
 eq(complete.expedition.progress, 0, "completed stored campaign has zero progress")
 local dirty = Progression.newProfile()
 dirty.expedition.progress, dirty.materials.iron = 5, math.huge
