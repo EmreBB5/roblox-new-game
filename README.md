@@ -4,6 +4,8 @@ Roblox için fantastik açık dünya MMORPG prototipi. Güvenli köyden yollarla
 
 ## Oyna
 
+[Hazır Aetheria.rbxl dosyasını doğrudan indir](https://github.com/EmreBB5/roblox-new-game/raw/refs/heads/codex/roblox-studio-setup/downloads/Aetheria.rbxl). Roblox Studio'da **Ctrl+O** ile açıp **F5** ile başlatabilirsin; Git veya Rojo kurulumu gerekmez.
+
 1. Bulutta `bash scripts/build.sh` ile `build/Aetheria.rbxlx` oluştur.
 2. Bu dosyayı bilgisayarına indir ve **Roblox Studio → File → Open from File** ile aç.
 3. **Play** düğmesine bas. Köy ve canavarlar oyun başladığında oluşturulur; düzenleme görünümü başlangıçta boştur.
