@@ -129,7 +129,7 @@ eq(check(103, still, "character1", true, true, 0/0), "cancelled", "NaN damage ti
 for version = 1, 3 do
 	local old = Profile.sanitize({version = version, level = 5, xp = 12, gold = 77, classId = "mage", equipmentTier = 2,
 		pets = {mossling = true}, equippedPet = "mossling", petPity = {thornwarden = 12}, materials = {wood = 8}, expedition = {stage = 3, progress = 2}})
-	eq(old.version, 6, "schema upgrade")
+	eq(old.version, 7, "schema upgrade")
 	eq(old.waypoints.village, true, "old profile default village")
 	eq(old.waypoints.forest, nil, "old profile must discover field destinations")
 	eq(old.gold, 77, "old currency preserved")

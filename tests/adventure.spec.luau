@@ -9,7 +9,7 @@ local function eq(actual, expected, label)
 	assert(actual == expected, label .. ": expected " .. tostring(expected) .. ", got " .. tostring(actual))
 end
 local p = Progression.newProfile()
-eq(p.version, 6, "new profile v4")
+eq(p.version, 7, "new profile v4")
 eq(Combat.stats(p, Config).maxHealth, 140, "warrior health")
 eq(Combat.stats(p, Config).basicRange, 11, "warrior melee range")
 p.classId = "mage"
@@ -142,7 +142,7 @@ eq(overflow.materials.wood, 100000000, "material reward bounded")
 
 local old = Progression.sanitize({version = 2, level = 7, xp = 18, gold = 123, questStatus = "return", questKills = 3,
 	pets = {tidefin = true}, equippedPet = "tidefin", petPity = {thornwarden = 17}, bossVictories = {thornwarden = 20}, lastBossClaims = {thornwarden = 1800000000}, stardust = 10})
-eq(old.version, 6, "v2 migration version")
+eq(old.version, 7, "v2 migration version")
 eq(old.level, 7, "v2 migration level")
 eq(old.xp, 18, "v2 migration XP")
 eq(old.gold, 123, "v2 migration gold")

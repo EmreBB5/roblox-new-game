@@ -76,7 +76,7 @@ for version = 1, 5 do
 	local old = Profile.sanitize({version = version, level = 7, xp = 23, gold = 120, questStatus = "return", classId = "mage", equipmentTier = 2,
 		pets = {mossling = true}, petXP = {mossling = 400}, equippedPet = "mossling", petPity = {thornwarden = 18},
 		lastBossClaims = {thornwarden = 1800000000}, materials = {wood = 9}, expedition = {stage = 5, progress = 3}, waypoints = {frost = true}})
-	eq(old.version, 6, "profile schema upgraded")
+	eq(old.version, 7, "profile schema upgraded")
 	eq(old.level, 7, "migration player level preserved")
 	eq(old.xp, 23, "migration XP preserved")
 	eq(old.gold, 120, "migration gold preserved")

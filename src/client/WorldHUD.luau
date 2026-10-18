@@ -135,13 +135,15 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	end
 	local playerMarker = label(map, "●", UDim2.fromScale(0.5, 0.5), UDim2.fromOffset(22, 22), 20, Color3.new(1, 1, 1))
 	playerMarker.AnchorPoint, playerMarker.TextXAlignment = Vector2.new(0.5, 0.5), Enum.TextXAlignment.Center
-	label(map, "↑ Kuzey   ◆ Boss   ▲ Seçkin   ◇ Türbe   ● Sen", UDim2.fromOffset(6, 2), UDim2.new(1, -12, 0, 20), 9, colors.muted)
+	label(map, "↑ Kuzey  ◆ Boss  ▲ Seçkin  ◇ Türbe  ▣ Keşif  ● Sen", UDim2.fromOffset(6, 2), UDim2.new(1, -12, 0, 20), 9, colors.muted)
+	local explorationHUD = require(script.Parent:WaitForChild("ExplorationHUD")).create(gui, mapPanel, map, remotes, make, label, button, colors, mapPosition)
 	local function setZ()
 		for _, item in ipairs(content:GetDescendants()) do if item:IsA("GuiObject") then item.ZIndex = 7 end end
 	end
 	setZ()
 	function self:setState(state)
 		self.state = state
+		explorationHUD:setState(state)
 		characterHUD:setState(state)
 		for id, card in pairs(cards) do
 			local owned = (state.pets or {})[id] == true
@@ -204,7 +206,16 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		show("character", true)
 		task.defer(function() characterHUD:focusContract(regionId) end)
 	end)
-	remotes:WaitForChild("WorldState").OnClientEvent:Connect(function(world) if type(world) == "table" then self.world = world end end)
+	remotes:WaitForChild("OpenExploration").OnClientEvent:Connect(function(siteId)
+		if type(siteId) ~= "string" or not Config.ExplorationSites[siteId] then return end
+		show("map", true)
+		task.defer(function() explorationHUD:focus(siteId) end)
+	end)
+	remotes:WaitForChild("WorldState").OnClientEvent:Connect(function(world)
+		if type(world) ~= "table" then return end
+		self.world = world
+		explorationHUD:setWorld(world)
+	end)
 	local function timeText(seconds)
 		seconds = math.max(0, math.floor(seconds))
 		return string.format("%02d:%02d", math.floor(seconds / 60), seconds % 60)

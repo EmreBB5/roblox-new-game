@@ -175,6 +175,21 @@ local roads = {
 	{{-760, -1020}, {-760, -1155}, 16}, {{790, -990}, {790, -1125}, 16},
 }
 
+local siteApproaches = {
+	forest_ruins = {{-130, -140}, {-310, -200}},
+	marsh_outpost = {{150, -170}, {400, -230}},
+	volcanic_archive = {{-110, -520}, {-220, -740}},
+	frost_watch = {{-700, -835}},
+	desert_caravan = {{730, -790}},
+}
+for id, site in Config.ExplorationSites do
+	local points = siteApproaches[id]
+	if points then
+		for index = 1, #points - 1 do table.insert(roads, {points[index], points[index + 1], 12}) end
+		table.insert(roads, {points[#points], {site.X, site.Z + 44}, 12})
+	end
+end
+
 local function nearRoad(x, z)
 	local point = Vector2.new(x, z)
 	for _, road in roads do
@@ -324,6 +339,124 @@ local function path(parent, from, to, width)
 	local road = part(parent, "TravelRoad", Vector3.new(width, 0.18, (to - from).Magnitude),
 		(from + to) / 2, Color3.fromRGB(159, 141, 111), Enum.Material.Ground)
 	road.CFrame = CFrame.lookAt((from + to) / 2, to)
+end
+
+local function explorationBridge(parent, center, regionId)
+	local frozen = regionId == "frost"
+	local water = disc(parent, "BridgePool", center + Vector3.new(0, 0.29, 34), 11,
+		if frozen then Color3.fromRGB(167, 217, 238) else Color3.fromRGB(67, 119, 125), if frozen then Enum.Material.Ice else Enum.Material.Glass)
+	water.Transparency = 0.35
+	water.CanCollide, water.CanTouch, water.CanQuery = false, false, false
+	for index = 1, 10 do
+		part(parent, "BridgePlank", Vector3.new(10, 0.5, 1.75), center + Vector3.new(0, 0.65, 24 + index * 1.8), palette.wood, Enum.Material.WoodPlanks)
+	end
+	for _, side in {-1, 1} do
+		part(parent, "BridgeRail", Vector3.new(0.5, 0.5, 20), center + Vector3.new(side * 5.3, 3.2, 34), palette.wood, Enum.Material.Wood)
+		for _, z in {25, 34, 43} do
+			part(parent, "BridgePost", Vector3.new(0.7, 3.5, 0.7), center + Vector3.new(side * 5.3, 1.8, z), palette.wood, Enum.Material.Wood)
+		end
+	end
+	for _, edge in {24, 44} do
+		part(parent, "BridgeStep", Vector3.new(10, 0.3, 2), center + Vector3.new(0, 0.3, edge), palette.stone, Enum.Material.Slate)
+	end
+end
+
+local function explorationSites(parent)
+	local folder = Instance.new("Folder")
+	folder.Name = "ExplorationSites"
+	folder.Parent = parent
+	local result = {}
+	for id, definition in Config.ExplorationSites do
+		local center = Vector3.new(definition.X, 0, definition.Z)
+		local regionId = definition.RegionId
+		local colors = regionColors[regionId]
+		local model = Instance.new("Model")
+		model.Name = "ExplorationSite_" .. id
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		model:SetAttribute("ExplorationSiteId", id)
+		model:SetAttribute("ExplorationPosition", center)
+		model.Parent = folder
+		disc(model, "CampClearing", center + Vector3.new(0, 0.16, 0), 36, colors.ground, Enum.Material[Config.Regions[regionId].Ground])
+		explorationBridge(model, center, regionId)
+		if regionId == "forest" then
+			for _, side in {-1, 1} do
+				part(model, "RootRuinColumn", Vector3.new(4, 11, 4), center + Vector3.new(side * 25, 5.5, -13), palette.stone, Enum.Material.Slate)
+				crystal(model, center + Vector3.new(side * 25, 11, -13), 0.5)
+				part(model, "AncientRoot", Vector3.new(1.6, 7, 1.7), center + Vector3.new(side * 23.5, 3.5, -11.5), palette.wood, Enum.Material.Wood)
+			end
+			part(model, "RuinedLintel", Vector3.new(54, 2.3, 5), center + Vector3.new(0, 12, -13), palette.stone, Enum.Material.Slate)
+		elseif regionId == "marsh" then
+			for _, side in {-1, 1} do
+				part(model, "OutpostPlatform", Vector3.new(12, 0.6, 18), center + Vector3.new(side * 25, 0.7, -6), palette.wood, Enum.Material.WoodPlanks)
+				for _, z in {-13, 1} do
+					part(model, "OutpostPost", Vector3.new(1, 9, 1), center + Vector3.new(side * 29, 4.5, z), palette.wood, Enum.Material.Wood)
+				end
+				part(model, "OutpostCanopy", Vector3.new(14, 0.5, 20), center + Vector3.new(side * 25, 9, -6), palette.roof, Enum.Material.Fabric)
+				part(model, "SupplyCrate", Vector3.new(3, 3, 3), center + Vector3.new(side * 25, 2.5, -11), palette.wood, Enum.Material.WoodPlanks)
+			end
+		elseif regionId == "volcanic" then
+			for _, side in {-1, 1} do
+				part(model, "ArchiveWall", Vector3.new(3, 13, 26), center + Vector3.new(side * 27, 6.5, -4), Color3.fromRGB(65, 58, 68), Enum.Material.Basalt)
+				for tier = 1, 3 do
+					part(model, "RuneTablet", Vector3.new(0.4, 2, 5), center + Vector3.new(side * 25.3, tier * 3, -4), colors.accent, Enum.Material.Neon)
+				end
+			end
+			part(model, "ArchiveArch", Vector3.new(57, 2.5, 5), center + Vector3.new(0, 14, -13), palette.stone, Enum.Material.Slate)
+		elseif regionId == "frost" then
+			for _, side in {-1, 1} do
+				local x = side * 26
+				for _, z in {-14, -2} do
+					part(model, "WatchtowerPillar", Vector3.new(2, 14, 2), center + Vector3.new(x, 7, z), palette.wood, Enum.Material.Wood)
+				end
+				part(model, "WatchtowerDeck", Vector3.new(10, 1, 16), center + Vector3.new(x, 10, -8), palette.wood, Enum.Material.WoodPlanks)
+				part(model, "WatchtowerSnowRoof", Vector3.new(13, 1.2, 19), center + Vector3.new(x, 14.5, -8), Color3.fromRGB(219, 237, 244), Enum.Material.Snow)
+			end
+		else
+			for _, side in {-1, 1} do
+				local x = side * 24
+				part(model, "CaravanTent", Vector3.new(11, 0.5, 17), center + Vector3.new(x, 7, -4), colors.accent, Enum.Material.Fabric)
+				for _, z in {-11, 3} do
+					part(model, "TentPole", Vector3.new(0.7, 7, 0.7), center + Vector3.new(x, 3.5, z), palette.wood, Enum.Material.Wood)
+				end
+				local wagon = part(model, "LostWagon", Vector3.new(6, 2.5, 10), center + Vector3.new(x, 2.7, -20), palette.wood, Enum.Material.WoodPlanks)
+				for _, direction in {-1, 1} do
+					local wheel = part(model, "WagonWheel", Vector3.new(0.8, 3, 3), wagon.Position + Vector3.new(direction * 3.4, -1.4, 0), palette.stone, Enum.Material.Slate)
+					wheel.Shape = Enum.PartType.Cylinder
+				end
+			end
+		end
+		local discoveryPosition = center + Vector3.new(0, 3, 24)
+		local stone = part(model, "DiscoveryStone", Vector3.new(3, 4, 1.4), discoveryPosition, palette.stone, Enum.Material.Slate)
+		stone.CanCollide = false
+		label(stone, definition.Name, "Keşfet: E · Sandığı iki muhafız koruyor", 330)
+		local discovery = Instance.new("ProximityPrompt")
+		discovery.Name, discovery.ObjectText, discovery.ActionText = "DiscoverExplorationSite", definition.Name, "Keşfet"
+		discovery.KeyboardKeyCode, discovery.GamepadKeyCode = Enum.KeyCode.E, Enum.KeyCode.ButtonX
+		discovery.HoldDuration, discovery.MaxActivationDistance, discovery.RequiresLineOfSight = 0.3, 12, false
+		discovery.Parent = stone
+		local chestPosition = center + Vector3.new(0, 2, -12)
+		part(model, "ChestBody", Vector3.new(5, 2.4, 3.2), center + Vector3.new(0, 1.5, -12), palette.wood, Enum.Material.WoodPlanks)
+		local lid = part(model, "ChestLid", Vector3.new(5.2, 0.55, 3.4), center + Vector3.new(0, 2.95, -12), palette.gold, Enum.Material.Metal)
+		for _, side in {-1, 1} do
+			part(model, "ChestBand", Vector3.new(0.35, 2.4, 3.3), center + Vector3.new(side * 1.6, 1.5, -12), palette.gold, Enum.Material.Metal)
+		end
+		for index = 1, 3 do
+			local coin = part(model, "TreasureGold", Vector3.new(0.65, 0.2, 0.65), center + Vector3.new((index - 2) * 1.1, 2.8, -12), palette.gold, Enum.Material.Neon)
+			coin.CanCollide, coin.CanTouch, coin.CanQuery = false, false, false
+		end
+		label(lid, "KORUNAN SANDIK", "Muhafızları yen · 5 sn savaş dışında kal · E", 330).MaxDistance = 60
+		local chest = Instance.new("ProximityPrompt")
+		chest.Name, chest.ObjectText, chest.ActionText = "OpenExplorationChest", definition.Name .. " · Hazine", "Sandığı aç"
+		chest.KeyboardKeyCode, chest.GamepadKeyCode = Enum.KeyCode.E, Enum.KeyCode.ButtonX
+		chest.HoldDuration, chest.MaxActivationDistance, chest.RequiresLineOfSight = 1.2, 12, false
+		chest.Parent = lid
+		model:SetAttribute("DiscoveryPosition", discoveryPosition)
+		model:SetAttribute("ChestPosition", chestPosition)
+		model:SetAttribute("ChestClosedCFrame", lid.CFrame)
+		model.PrimaryPart = stone
+		result[id] = {id = id, position = center, discoveryPosition = discoveryPosition, discoveryPrompt = discovery, chestPosition = chestPosition, chestPrompt = chest}
+	end
+	return result
 end
 
 local function arena(parent, bossId, definition)
@@ -508,6 +641,9 @@ function World.build()
 			for _, elite in Config.Elites do
 				if Vector2.new(x - elite.X, z - elite.Z).Magnitude < 60 then blocked = true end
 			end
+			for _, site in Config.ExplorationSites do
+				if Vector2.new(x - site.X, z - site.Z).Magnitude < 52 then blocked = true end
+			end
 			for _, waypoint in Config.Waypoints do
 				local point = waypoint.Position
 				if Vector2.new(x - point.x, z - point.z).Magnitude < 24 then blocked = true end
@@ -550,10 +686,16 @@ function World.build()
 	local nodes = resourceNodes(folder)
 	local waypoints = travelShrines(folder)
 	local contractBoards = regionalContractBoards(folder)
+	local discoveries = explorationSites(folder)
 	local enemySpawns = {}
 	for id, region in Config.Regions do
 		for _, offset in {Vector3.new(-58, 0, 42), Vector3.new(52, 0, 37), Vector3.new(-74, 0, -27), Vector3.new(72, 0, -32)} do
 			table.insert(enemySpawns, {position = Vector3.new(region.X, 0.5, region.Z) + offset, regionId = id})
+		end
+	end
+	for id, site in Config.ExplorationSites do
+		for _, side in {-1, 1} do
+			table.insert(enemySpawns, {position = Vector3.new(site.X + side * 12, 0.5, site.Z - 4), regionId = site.RegionId, siteId = id})
 		end
 	end
 	-- Low-detail mountain ridges bound the walkable world.
@@ -579,6 +721,7 @@ function World.build()
 		ResourceNodes = nodes,
 		Waypoints = waypoints,
 		ContractBoards = contractBoards,
+		ExplorationSites = discoveries,
 		EnemySpawns = enemySpawns,
 		EnemyFolder = enemies,
 		SafeZoneCenter = Vector3.zero,

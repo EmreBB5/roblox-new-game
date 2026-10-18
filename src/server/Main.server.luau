@@ -16,12 +16,13 @@ local PetGrowth = require(ReplicatedStorage.Shared.PetGrowth)
 local EliteService = require(script.Parent.EliteService)
 local EnemyService = require(script.Parent.EnemyService)
 local RegionalContractService = require(script.Parent.RegionalContractService)
+local ExplorationService = require(script.Parent.ExplorationService)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "CombatHit", "PartyAction", "PartyState", "TravelRequest", "OpenTravel", "RequestRegionContract", "OpenJournal"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "CombatHit", "PartyAction", "PartyState", "TravelRequest", "OpenTravel", "RequestRegionContract", "OpenJournal", "RequestExploration", "OpenExploration"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -42,6 +43,7 @@ local travelService
 local eliteService
 local enemyService
 local contractService
+local explorationService
 
 local function state(player)
 	local handle = profiles[player]
@@ -56,6 +58,8 @@ local function state(player)
 	if player:GetAttribute("PetLevel") ~= petLevel then player:SetAttribute("PetLevel", petLevel) end
 	local regionalContracts, regionContractReady = {}, {}
 	if contractService then regionalContracts, regionContractReady = contractService:snapshot(player) end
+	local exploration, explorationReady = {discovered = {}, claimed = {}}, {}
+	if explorationService then exploration, explorationReady = explorationService:snapshot(player) end
 	local resource, cooldowns = 100, {}
 	if actions then resource, cooldowns = actions:snapshot(player) end
 	remotes.State:FireClient(player, {
@@ -69,6 +73,7 @@ local function state(player)
 		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
 		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
 		regionalContracts = regionalContracts, regionContractReady = regionContractReady,
+		exploration = exploration, explorationReady = explorationReady,
 		waypoints = table.clone(p.waypoints), travel = if travelService then travelService:snapshot(player) else nil,
 	})
 end
@@ -99,6 +104,7 @@ end
 local function worldSnapshot()
 	local snapshot = bossService:snapshot()
 	snapshot.elites = if eliteService then eliteService:snapshot() else {}
+	snapshot.sites = if enemyService then enemyService:siteSnapshots() else {}
 	return snapshot
 end
 
@@ -153,6 +159,7 @@ contractService = RegionalContractService.new(world, {
 })
 contractService:connect()
 enemyService = EnemyService.new(world, {
+	siteChanged = function() remotes.WorldState:FireAllClients(worldSnapshot()) end,
 	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
 	reward = function(player, regionId, position)
 		local region = Config.Regions[regionId]
@@ -211,6 +218,15 @@ actions = PlayerActions.new(world, {
 	end,
 })
 actions:connectGathering()
+explorationService = ExplorationService.new(world, {
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition,
+	combatInfo = function(player) return actions:combatInfo(player) end,
+	clear = function(id) return enemyService:isSiteClear(id) end,
+	state = state, save = savePlayer,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+	open = function(player, id) remotes.OpenExploration:FireClient(player, id) end,
+})
+explorationService:connect()
 partyService = PartyService.new({
 	profiles = profiles, living = livingCharacter, trusted = trustedPosition,
 	state = function(player, snapshot) if player.Parent then remotes.PartyState:FireClient(player, snapshot) end end,
@@ -232,6 +248,9 @@ remotes.PartyAction.OnServerEvent:Connect(function(player, action, targetId, ...
 end)
 remotes.TravelRequest.OnServerEvent:Connect(function(player, id, ...)
 	if select("#", ...) == 0 then travelService:request(player, id) end
+end)
+remotes.RequestExploration.OnServerEvent:Connect(function(player, action, id, ...)
+	if select("#", ...) == 0 then explorationService:request(player, action, id) end
 end)
 remotes.RequestRegionContract.OnServerEvent:Connect(function(player, action, regionId, ...)
 	if select("#", ...) == 0 and (action == "accept" or action == "claim") then contractService:request(player, action, regionId) end
@@ -330,6 +349,7 @@ Players.PlayerRemoving:Connect(function(player)
 	travelService:remove(player)
 	partyService:remove(player)
 	contractService:remove(player)
+	explorationService:remove(player)
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)

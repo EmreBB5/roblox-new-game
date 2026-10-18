@@ -16,9 +16,9 @@ vecMT.__index = function(v, key)
 	if key == "Magnitude" then return math.sqrt(v.X ^ 2 + v.Y ^ 2 + v.Z ^ 2) end
 	return nil
 end
-local function fixture(regionId)
+local function fixture(regionId, siteId)
 	regionId = regionId or "marsh"
-	local f = {clock = 100, queue = {}, serial = 0, models = {}, rewards = {}, profiles = {}, players = {}, assists = {}, blocked = false, safe = false, changes = 0}
+	local f = {clock = 100, queue = {}, serial = 0, models = {}, rewards = {}, profiles = {}, players = {}, assists = {}, blocked = false, safe = false, changes = 0, siteChanges = 0, failSpawn = false}
 	local function later(seconds, callback)
 		f.serial += 1
 		local job = {at = f.clock + seconds, callback = callback, serial = f.serial}
@@ -59,6 +59,12 @@ local function fixture(regionId)
 		return model
 	end
 	worldFactory.createEnemy = function(_, position, _, id)
+		if f.failSpawn then
+			local broken = disposable()
+			broken.FindFirstChildOfClass = function() return nil end
+			broken.FindFirstChild = function() return nil end
+			return broken
+		end
 		return worldFactory.createElite(nil, {X = position.X, Z = position.Z, MaxHealth = Config.Regions[id].EnemyHealth})
 	end
 	worldFactory.createEnemyTelegraph = function() return disposable() end
@@ -82,9 +88,11 @@ local function fixture(regionId)
 		player.hp = {Health = 140, TakeDamage = function(self, damage) self.Health -= damage end}
 		f.players[index], f.profiles[player] = player, {data = {}}
 	end
-	f.service = Service.new({EnemyFolder = {}, EnemySpawns = {{position = vec(definition.X, 0, definition.Z), regionId = regionId}}}, {
+	local spawns = {{position = vec(definition.X, 0, definition.Z), regionId = regionId, siteId = siteId}}
+	if siteId then table.insert(spawns, {position = vec(definition.X + 12, 0, definition.Z), regionId = regionId, siteId = siteId}) end
+	f.service = Service.new({EnemyFolder = {}, EnemySpawns = spawns}, {
 		profiles = f.profiles,
-		
+		siteChanged = function() f.siteChanges += 1 end,
 		living = function(player) if player.hp.Health > 0 then
 				return player.root, player.hp
 			end
@@ -184,5 +192,43 @@ f.service:finish(f.current)
 f.service:close()
 f:advance(120)
 eq(#f.models, 1, "closed normal service cannot respawn")
+f = fixture("forest", "forest_ruins")
+local first, second = f.service.slots[1], f.service.slots[2]
+eq(f.service:isSiteClear("forest_ruins"), false, "alive guards keep chest locked")
+first.humanoid.Health = 0
+eq(f.service:isSiteClear("forest_ruins"), false, "deferred death status not proof of clear")
+f.service:finish(first)
+eq(f.service:isSiteClear("forest_ruins"), false, "one defeated guard insufficient")
+f.service:finish(second)
+eq(f.service:isSiteClear("forest_ruins"), true, "exact two defeated guards clear site")
+eq(f.siteChanges, 2, "each guard death publishes site state")
+f.service.slots[2] = nil
+eq(f.service:isSiteClear("forest_ruins"), false, "missing guard registration cannot open chest")
+local missingSnapshot
+for _, row in f.service:siteSnapshots() do if row.id == "forest_ruins" then missingSnapshot = row end end
+eq(missingSnapshot.guardsAlive, 1, "missing guard represented as unavailable")
+f.service.slots[2] = second
+f.service.slots[3] = {entry = {siteId = "forest_ruins"}, status = "defeated"}
+eq(f.service:isSiteClear("forest_ruins"), false, "extra guard registration cannot open chest")
+f.service.slots[3] = nil
+f:advance(144.999)
+eq(f.service:isSiteClear("forest_ruins"), true, "site guard respawn not early")
+f:advance(145)
+eq(f.service:isSiteClear("forest_ruins"), false, "site guard respawn relocks chest after45s")
+eq(f.siteChanges, 4, "both respawns publish updated guard state")
+eq(f.service.slots[1] ~= first, true, "site guard first slot replaced")
+eq(f.service.slots[2] ~= second, true, "site guard second slot replaced")
+f.service:close()
+eq(f.service:isSiteClear("forest_ruins"), false, "closed service cannot prove clear")
+eq(f.service:isSiteClear("admin"), false, "unknown site cannot prove clear")
+
+f = fixture("forest", "forest_ruins")
+f.service:finish(f.service.slots[1])
+f.service:finish(f.service.slots[2])
+f.failSpawn = true
+f:advance(145)
+eq(f.service.slots[1], nil, "failed guard replacement removes old defeated slot")
+eq(f.service.slots[2], nil, "failed second guard replacement removes old defeated slot")
+eq(f.service:isSiteClear("forest_ruins"), false, "failed replacement cannot leave chest falsely clear")
 print("Enemy service orchestration mocks: " .. assertions .. " assertions passed (no Roblox physics)")
 end

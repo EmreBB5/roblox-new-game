@@ -35,6 +35,7 @@ def main():
     run_suite("enemy-runtime", "src/shared/EnemyRules.luau", "src/server/EnemyService.luau")
     run_suite("contract-runtime", "src/shared/Contracts.luau", "src/server/RegionalContractService.luau", "src/shared/Progression.luau")
     run_suite("target-runtime", "src/shared/Combat.luau", "src/server/PlayerActions.luau")
+    run_suite("exploration-runtime", "src/shared/Exploration.luau", "src/server/ExplorationService.luau", "src/shared/Progression.luau")
 
 
 if __name__ == "__main__":

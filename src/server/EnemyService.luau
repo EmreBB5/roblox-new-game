@@ -20,6 +20,8 @@ function Service:cancel(current)
 end
 function Service:spawn(index, entry)
 	if self.closed then return end
+	-- A failed replacement must not leave a defeated slot proving a clear site.
+	self.slots[index] = nil
 	local model = World.createEnemy(self.world.EnemyFolder, entry.position, index, entry.regionId)
 	local humanoid, root = model:FindFirstChildOfClass("Humanoid"), model:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not root then model:Destroy() return end
@@ -30,6 +32,7 @@ function Service:spawn(index, entry)
 	model:SetAttribute("EnemyBehavior", definition.Kind)
 	model:SetAttribute("RegionId", entry.regionId)
 	model:SetAttribute("MobId", index)
+	if entry.siteId then model:SetAttribute("SiteId", entry.siteId) end
 	humanoid.MaxHealth, humanoid.Health, humanoid.WalkSpeed = region.EnemyHealth, region.EnemyHealth, Config.EnemyWalkSpeed
 	root:SetNetworkOwner(nil)
 	local current = {index = index, entry = entry, model = model, humanoid = humanoid, root = root,
@@ -46,8 +49,13 @@ function Service:finish(current)
 	local player = current.lastAttacker
 	if player and self.callbacks.profiles[player] then self.callbacks.reward(player, current.entry.regionId, current.root.Position) end
 	task.delay(3, function() if current.model.Parent then current.model:Destroy() end end)
-	task.delay(Config.EnemyRespawnSeconds, function()
-		if not self.closed and self.slots[current.index] == current then self:spawn(current.index, current.entry) end
+	local site = if current.entry.siteId then Config.ExplorationSites[current.entry.siteId] else nil
+	if site and self.callbacks.siteChanged then self.callbacks.siteChanged(current.entry.siteId) end
+	task.delay(if site then site.GuardRespawn else Config.EnemyRespawnSeconds, function()
+		if not self.closed and self.slots[current.index] == current then
+			self:spawn(current.index, current.entry)
+			if site and self.callbacks.siteChanged then self.callbacks.siteChanged(current.entry.siteId) end
+		end
 	end)
 end
 function Service:lineOfSight(current, root)
@@ -127,6 +135,37 @@ function Service:update()
 		else current.humanoid:MoveTo(target.Position) end
 	end
 end
+-- Missing or extra guard registrations must never open a personal chest.
+-- Defeated slots remain registered through corpse cleanup until their respawn.
+function Service:isSiteClear(id)
+	local definition = if type(id) == "string" then Config.ExplorationSites[id] else nil
+	if self.closed or not definition then return false end
+	local count = 0
+	for _, current in self.slots do
+		if current.entry.siteId == id then
+			count += 1
+			if current.status ~= "defeated" then return false end
+		end
+	end
+	return count == definition.Guards
+end
+function Service:siteSnapshots()
+	local entries = {}
+	for id, definition in Config.ExplorationSites do
+		local registered, alive = 0, 0
+		for _, current in self.slots do
+			if current.entry.siteId == id then
+				registered += 1
+				if current.status ~= "defeated" then alive += 1 end
+			end
+		end
+		-- An unregistered guard is unavailable, never proof of a cleared site.
+		alive += math.max(0, definition.Guards - registered)
+		table.insert(entries, {id = id, clear = self:isSiteClear(id), guardsAlive = alive, guardCount = definition.Guards})
+	end
+	table.sort(entries, function(a, b) return a.id < b.id end)
+	return entries
+end
 function Service:close()
 	self.closed = true
 	for _, current in self.slots do
@@ -135,5 +174,6 @@ function Service:close()
 		if current.model.Parent then current.model:Destroy() end
 	end
 	table.clear(self.targets)
+	if self.callbacks.siteChanged then self.callbacks.siteChanged() end
 end
 return Service

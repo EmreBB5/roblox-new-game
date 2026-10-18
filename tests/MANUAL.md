@@ -85,3 +85,17 @@ Bu yeni senaryoların gerçek Studio ve yayınlanmış özel test uygulaması ay
 6. Küçük yatay/dikey ekranlarda hedef paneli, görev listesi ve yetenek düğmeleri üst üste binmemeli. Günlükte hedefler açık görünmeli; teslim için ilgili panoya dönülmesi gerektiği anlaşılmalı.
 
 Saf kurallar ve taklit ortamındaki servis akışları otomatik test edilmiştir; bu liste gerçek Studio oynanış uygulamasının yerini tutmaz.
+
+## Keşif kampları ve kişisel sandıklar
+
+1. Beş kampta giriş keşif işaretiyle etkileş. Keşif savaş sırasında da kaydedilebilmeli; hareket/savaş kontrollerini kapatan günlük kendiliğinden açılmamalı. Harita işareti ve keşif günlüğü kişisel ilerlemeyi göstermeli.
+2. Bir muhafız hayattayken sandık açılmamalı. Tam iki kayıtlı muhafız yenildikten sonra sandık her oyuncuya ayrı, tek seferlik ödül vermeli. Eksik/başarısız muhafız oluşturma, fazladan kayıt veya kapanan servis alanı temiz saymamalı.
+3. Sandıktan 14 stud'dan uzakta, ölüyken veya son hasar verme/alma üzerinden 5 saniye geçmeden istek reddedilmeli. Tam 5 saniye sınırında, canlı ve güvenilir konumdaki oyuncu açabilmeli. UI'da temiz görünen alanın muhafızı arada doğarsa sunucu sandığı kilitlemeli.
+4. Muhafızlar 45 saniye dolmadan yeniden doğmamalı; sonra tek kopya doğmalı ve alan tekrar kilitlenmeli. Oyuncunun önceden aldığı kişisel sandık ödülü tekrar açılmamalı. İkinci oyuncu aynı ortak temizlikten kendi tek ödülünü alabilmeli.
+5. Hızlı tekrar istek, tekrar giriş veya keşif işaretine yeniden basma ödülü çoğaltmamalı. Ödül yalnız oyuncu XP'si, altın ve üç bölge malzemesi vermeli; pet veya pet XP'si vermemeli. Altın/malzeme sınırında kayıt bozulmamalı.
+6. Yayınlanmış özel testte v1-v6 profillerin sınıf, donanım, pet eğitimi, boss sayaçları, görevleri ve türbe keşfi korunmalı. Yeni kamp keşifleri ve kişisel sandıklar yeniden girişte kalmalı. Mobilde beş kart kaydırılabilir, 44 px düğmeler kullanılabilir olmalı.
+
+7. İki oyuncudan yalnız biri sandık ödülünü alsın: yalnız onda kapak açık ve altınlar gizli olmalı; diğerinde kapalı kalmalı. Kampı streaming dışına çıkarıp geri gelince ve karakter yeniden doğunca kişisel görünüm korunmalı. İkinci oyuncu da ödül alınca onun kapağı açılmalı.
+8. Beş yol kolunda ve 10 stud genişliğindeki köprülerin iki girişinde yürüyüp zıpla. Korkuluklar, keşif taşı, kamp binaları ve sandık ortadaki geçişi engellememeli. Düşme, takılma ve zemin yüklenme boşluğu olmamalı.
+
+Otomatik testler saf ödül kurallarını ve gerçek servis metotlarının taklit edilmiş oyuncu/konum/guard akışlarını kapsar; Studio fiziği, görünüm ve gerçek DataStore ayrı doğrulanmalıdır.

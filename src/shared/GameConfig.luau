@@ -1,5 +1,12 @@
 -- Pure shared data: no Roblox globals. Loot decisions remain on the server.
 return table.freeze({
+	ExplorationSites = {
+		forest_ruins = {Name = "Kök Harabeleri", RegionId = "forest", X = -355, Z = -330, Guards = 2, GuardRespawn = 45, XP = 60, Gold = 20, RewardMaterial = "wood", MaterialAmount = 3},
+		marsh_outpost = {Name = "Sis İskelesi", RegionId = "marsh", X = 425, Z = -340, Guards = 2, GuardRespawn = 45, XP = 100, Gold = 30, RewardMaterial = "iron", MaterialAmount = 3},
+		volcanic_archive = {Name = "Köz Arşivi", RegionId = "volcanic", X = -145, Z = -880, Guards = 2, GuardRespawn = 45, XP = 150, Gold = 45, RewardMaterial = "ember", MaterialAmount = 3},
+		frost_watch = {Name = "Buz Nöbeti", RegionId = "frost", X = -965, Z = -910, Guards = 2, GuardRespawn = 45, XP = 220, Gold = 60, RewardMaterial = "iron", MaterialAmount = 3},
+		desert_caravan = {Name = "Kayıp Kervan", RegionId = "desert", X = 1010, Z = -925, Guards = 2, GuardRespawn = 45, XP = 280, Gold = 80, RewardMaterial = "ember", MaterialAmount = 3},
+	},
 	RegionalContracts = {
 		forest = {Name = "Ormanın Emaneti", KillTarget = 5, GatherTarget = 3, WaypointId = "forest", XP = 75, Gold = 30, Material = "wood", MaterialAmount = 3},
 		marsh = {Name = "Sisin Ardında", KillTarget = 5, GatherTarget = 3, WaypointId = "marsh", XP = 125, Gold = 45, Material = "iron", MaterialAmount = 3},

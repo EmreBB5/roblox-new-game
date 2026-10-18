@@ -18,9 +18,9 @@ function Progression.newProfile()
 	for _, id in {"forest", "marsh", "volcanic", "frost", "desert"} do
 		regionalContracts[id] = {status = "available", kills = 0, gathers = 0}
 	end
-	return {regionalContracts = regionalContracts,version = 6, level = 1, xp = 0, gold = 0, kills = 0,
+	return {regionalContracts = regionalContracts,version = 7, level = 1, xp = 0, gold = 0, kills = 0,
 		questStatus = "available", questKills = 0, hasCrystal = false,
-		pets = {}, petXP = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
+		exploration = {discovered = {}, claimed = {}}, pets = {}, petXP = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
 		waypoints = {village = true}, materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
 end
 
@@ -64,6 +64,14 @@ function Progression.sanitize(raw: any)
 		local entry = if type(raw.regionalContracts) == "table" then raw.regionalContracts[id] else nil
 		if type(entry) == "table" and (entry.status == "active" or entry.status == "completed") then
 			profile.regionalContracts[id] = {status = entry.status, kills = bounded(entry.kills, 5), gathers = bounded(entry.gathers, 3)}
+		end
+	end
+	if type(raw.exploration) == "table" then
+		for _, id in {"forest_ruins", "marsh_outpost", "volcanic_archive", "frost_watch", "desert_caravan"} do
+			local discovered = type(raw.exploration.discovered) == "table" and raw.exploration.discovered[id] == true
+			local claimed = type(raw.exploration.claimed) == "table" and raw.exploration.claimed[id] == true
+			if discovered or claimed then profile.exploration.discovered[id] = true end
+			if claimed then profile.exploration.claimed[id] = true end
 		end
 	end
 	if raw.classId == "mage" then profile.classId = "mage" end
