@@ -3,13 +3,13 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local CombatText = {}
-local started = false
+local stopCurrent
 local function finite(value)
 	return type(value) == "number" and value == value and math.abs(value) < math.huge
 end
-function CombatText.start(remote)
-	if started then return end
-	started = true
+function CombatText.start(remote, gui)
+	if stopCurrent then stopCurrent() end
+	local active, connections = true, {}
 	local player = Players.LocalPlayer
 	local folder = Instance.new("Folder")
 	folder.Name = "LocalHitNumbers"
@@ -19,9 +19,20 @@ function CombatText.start(remote)
 		folder:ClearAllChildren()
 		table.clear(entries)
 	end
-	player.CharacterRemoving:Connect(clear)
-	player.CharacterAdded:Connect(clear)
-	remote.OnClientEvent:Connect(function(hit)
+	local function stop()
+		if not active then return end
+		active = false
+		for _, connection in ipairs(connections) do connection:Disconnect() end
+		clear()
+		folder:Destroy()
+		stopCurrent = nil
+	end
+	stopCurrent = stop
+	table.insert(connections, player.CharacterRemoving:Connect(clear))
+	table.insert(connections, player.CharacterAdded:Connect(clear))
+	table.insert(connections, gui.Destroying:Connect(stop))
+	table.insert(connections, gui.AncestryChanged:Connect(function() if not gui.Parent then stop() end end))
+	table.insert(connections, remote.OnClientEvent:Connect(function(hit)
 		if type(hit) ~= "table" or (hit.kind ~= "damage" and hit.kind ~= "heal") then return end
 		if typeof(hit.position) ~= "Vector3" or not finite(hit.amount) or hit.amount <= 0 or hit.amount > 1e6 then return end
 		local position = hit.position
@@ -55,6 +66,8 @@ function CombatText.start(remote)
 		billboard.Active = false
 		billboard.Parent = anchor
 		local text = Instance.new("TextLabel")
+		text.AnchorPoint = Vector2.new(0.5, 0.5)
+		text.Position = UDim2.fromScale(0.5, 0.5)
 		text.Size = UDim2.fromScale(1, 1)
 		text.BackgroundTransparency = 1
 		text.Active = false
@@ -62,16 +75,20 @@ function CombatText.start(remote)
 		text.TextSize = 24
 		text.Text = (hit.kind == "heal" and "+" or "") .. tostring(amount)
 		text.TextColor3 = hit.kind == "heal" and Color3.fromRGB(123, 247, 160) or Color3.fromRGB(255, 229, 162)
-		text.TextStrokeColor3 = Color3.fromRGB(30, 36, 31)
+		text.TextStrokeColor3 = Color3.fromRGB(16, 29, 48)
 		text.TextStrokeTransparency = 0.35
 		text.Parent = billboard
+		local scale = Instance.new("UIScale")
+		scale.Scale, scale.Parent = 0.72, text
+		TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 		TweenService:Create(anchor, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = anchor.Position + Vector3.new(0, 2, 0)}):Play()
-		TweenService:Create(text, TweenInfo.new(0.8), {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
+		TweenService:Create(text, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.2), {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
 		Debris:AddItem(anchor, 1)
 		task.delay(1, function()
 			local index = table.find(entries, anchor)
 			if index then table.remove(entries, index) end
 		end)
-	end)
+	end))
+	return stop
 end
 return CombatText

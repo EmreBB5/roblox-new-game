@@ -24,6 +24,14 @@ Mobilde varsayılan Roblox hareket/atlama kontrolleri, **SALDIR**, iki yetenek, 
 
 Orman yaratıkları 10 XP, bataklık yaratıkları 30 XP, köz yaratıkları 50 XP, buzul yaratıkları 80 XP, çöl yaratıkları 110 XP verir. Başlangıç görevi yalnız orman yaratıklarıyla ilerler; ödülü 75 XP, 25 altın ve çantada gösterilen tek orman kristalidir. Kristal petlerden ayrı bir görev ödülüdür. Eldrin'le tekrar konuşarak görev yenilenebilir. Güvenli köy bölgesinde saldırı yapılmaz; normal canavarlar yeniden doğar.
 
+## Savaş ve kazanım sunumu · v9
+
+Savaşçı kılıcı altın yaylar, alan darbesi çevresel bir halka; büyücü oku hareket eden ışık çekirdeği ve iki iz, alan büyüsü mor/turkuaz halkalar kullanır. İyileştirme yeşil halka ve yükselen ışık noktalarıyla ayrılır. **İsabet parıltıları ve sayılar yalnız sunucunun doğruladığı gerçek hasar/iyileştirmeyi gösterir.** Savaş efektleri ortak bir 100 parça bütçesine, sayılar 30 görünüm sınırına tabidir; sayı animasyonları kısa bir büyüme ve gecikmeli kaybolma kullanır.
+
+Yakındaki düşmanların isim, bölge seviyesi, rol ve canı özel etiketlerde görünür. Bosslar altın, elitler turkuaz çerçeve; düşük can kırmızı ton kullanır. Can çubuğundaki kısa gecikmeli iz, alınan hasarı okumayı kolaylaştırır. Aynı anda en fazla **12 etiket**, 10 Hz güncelleme ve normal/elit/boss için **55/100/150 stud** sınırları vardır. Etiketler duvarın arkasından çizilmez; uzaklaşınca, ölümde veya streaming çıkışında yerleşik göstergeler geri yüklenir.
+
+Seviye, yeni pet, donanım, keşif ve kişisel sandık kazanımları tek bir **kısa özet kartında** gösterilir. Aynı türdeki hızlı kazanımlar birleştirilir; en fazla üç bildirim bekler. İlk profil yüklemesi kutlama üretmez. Sunucunun artan `feedbackRevision` değeri eski/tekrar mesajları eler; seviye atlanırken XP, oyunun gerçek seviye eğrisinden hesaplanır. Altın özeti, gözlenen olumlu bakiye değişimidir. Kart etkileşimsizdir; mobil kontrollerin yanındaki boş alana yerleşir ve fare saldırılarını engellemez. Bildirimler ödül vermez; kayıt şeması v7 kalır.
+
 ## Görsel yenileme · v8
 
 Köy artık eğimli arduvaz çatılar, ahşap kirişler, sıcak pencereler, çiçeklikler, çizgili pazar tezgâhları, kehribar fenerler ve kristal çeşmeyle karşılar. Eldrin/Borin'in yüz ve giysi ayrıntıları, silahların sap, kabza, rün ve odak parçaları belirginleşti. Kampların bölgesel flamaları ve sandıkların metal kilit/perçinleri var. Dünya etiketleri başlık ve açıklamayı farklı boyutta gösterir.
@@ -180,9 +188,9 @@ bash scripts/check.sh
 
 Kurulum, resmi GitHub sürümlerinden **Rojo 7.7.1** ve **Luau 0.743** indirir; yayınlanan SHA-256 değerlerini doğruladıktan sonra `/workspace/.tools/aetheria/bin` altına kurar. Tekrar çalıştırma doğrulanmış indirme önbelleğini kullanır. Farklı araç konumu için `AETHERIA_TOOLS_DIR` değişkeni desteklenir. Python'un TLS doğrulaması açık kalır; checksum uyuşmazlığı kurulumu durdurur.
 
-`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler ve Roblox'a bağlı olmayan ortak mantıkta tür analizi yapar. Yedi saf Luau paketinde ilerleme 34, boss/pet 166, savaş/sefer/üretim 143, grup/seyahat/dünya 185, pet eğitimi/elit 179, bölge görevi/yaratık kuralları 293 ve keşif/kayıt geçişi 318 doğrulama vardır (toplam 1.318).
+`scripts/check.sh`, tüm Luau kaynaklarını sözdizimi açısından derler ve Roblox'a bağlı olmayan ortak mantıkta tür analizi yapar. Sekiz saf Luau paketinde ilerleme 34, boss/pet 166, savaş/sefer/üretim 143, grup/seyahat/dünya 185, pet eğitimi/elit 179, bölge görevi/yaratık kuralları 293, keşif/kayıt geçişi 318 ve kazanım sunumu 58 doğrulama vardır (toplam 1.376).
 
-Ardından `scripts/test-roblox-mocks.py`, **gerçek EliteService, EnemyService, RegionalContractService, PlayerActions ve ExplorationService kaynak kodlarını** sınırlı Roblox taklitleriyle çalıştırır. Toplam 274 ek doğrulama; gecikmiş saldırı iptali, tek ödül, grup paylaşımı, ölüm, yeniden doğma, görev panosu güvenliği, seçili hedefin geçerliliği ve sandıkların son anda muhafız/savaş/mesafe kontrolünü denetler. Toplam **1.592 doğrulama** çalışır. Bu testler Roblox fiziğini, ağını veya streaming'i çalıştırmaz. Son olarak Rojo Studio dosyasını üretir; `scripts/verify-export.py`, bütün kaynakların ve Script/LocalScript/ModuleScript türlerinin dışa aktarımda güncel olduğunu doğrular. Server/client dosyalarının Roblox API türleri bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
+Ardından `scripts/test-roblox-mocks.py`, **gerçek EliteService, EnemyService, RegionalContractService, PlayerActions ve ExplorationService kaynak kodlarını** sınırlı Roblox taklitleriyle çalıştırır. Toplam 274 ek doğrulama; gecikmiş saldırı iptali, tek ödül, grup paylaşımı, ölüm, yeniden doğma, görev panosu güvenliği, seçili hedefin geçerliliği ve sandıkların son anda muhafız/savaş/mesafe kontrolünü denetler. Toplam **1.650 doğrulama** çalışır. Bu testler Roblox fiziğini, ağını veya streaming'i çalıştırmaz. Son olarak Rojo Studio dosyasını üretir; `scripts/verify-export.py`, bütün kaynakların ve Script/LocalScript/ModuleScript türlerinin dışa aktarımda güncel olduğunu doğrular. Server/client dosyalarının Roblox API türleri bağımsız analiz kapsamına girmez. `build/` üretilmiş çıktıdır ve Git tarafından yok sayılır.
 
 ### Windows: GitHub deposunu Roblox Studio'ya bağla
 

@@ -44,10 +44,12 @@ local eliteService
 local enemyService
 local contractService
 local explorationService
+local feedbackRevisions = {}
 
 local function state(player)
 	local handle = profiles[player]
 	if not handle or not player.Parent then return end
+	feedbackRevisions[player] = (feedbackRevisions[player] or 0) + 1
 	local p = handle.data
 	local petStats = {}
 	for petId, owned in p.pets do
@@ -63,6 +65,7 @@ local function state(player)
 	local resource, cooldowns = 100, {}
 	if actions then resource, cooldowns = actions:snapshot(player) end
 	remotes.State:FireClient(player, {
+		feedbackRevision = feedbackRevisions[player],
 		level = p.level, xp = p.xp, xpNeeded = Progression.xpNeeded(p.level),
 		gold = p.gold, kills = p.kills, questStatus = p.questStatus,
 		questKills = p.questKills, questTarget = Config.QuestTarget,
@@ -350,6 +353,7 @@ Players.PlayerRemoving:Connect(function(player)
 	partyService:remove(player)
 	contractService:remove(player)
 	explorationService:remove(player)
+	feedbackRevisions[player] = nil
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)

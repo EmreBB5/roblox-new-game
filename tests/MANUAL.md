@@ -116,3 +116,14 @@ Ek v8 kontrolleri:
 - İki istemciyi farklı bölgelere götür. Her istemcide 110 stud içindeki en yakın en fazla 12 dünya ışığı yaklaşık 0,7 saniyede seçilmeli; bir istemcinin ışık/atmosfer ayarı diğerini değiştirmemeli. Arayüz kapanınca önceki yerel ışık durumu geri gelmeli.
 - Yaklaşan, duran, ölen ve yeniden doğan yaratıkları izle. Yerel yürüyüş hareketi kök konumu, hasar menzili veya sunucu hareketini değiştirmemeli. Uzaklaşınca/streaming çıkışında hareket temizlenmeli; yakın kristalin iç ve dış parçaları birlikte hareket etmeli. Kamera ve petler yürürken titreme veya biriken görünüm oluşmamalı.
 - İki oyuncuda pet koleksiyonunu tekrar açıp kapat. Üç boyutlu önizleme kameraları doğru peti göstermeli; sahiplik ve seviye yalnız ilgili oyuncunun kayıtlarına uymalı. Yeni görünüm pet düşürme, kuşanma veya ödül kararı vermemeli. Gerçek render döngüsü, kamera görüntüsü ve fizik bu otomatik kaynak denetiminde çalıştırılmamıştır.
+
+## v9 savaş ve ödül sunumu
+
+1. İlk girişte mevcut seviye, altın, donanım, pet ve sandık kayıtları yüklenirken kutlama çıkmamalı. Yeni kazanımlarda tek özet kart gösterilmeli; aynı State tekrarı veya daha eski feedbackRevision kutlamayı yenilememeli. Sözleşme/sandık toplu ödülünde XP ve altın toplamları gerçek sunucu artışına uymalı.
+2. Seviye sınırını aşan XP ödülünü ve aynı anda pet/seviye/donanım kazanımını dene. Birikmiş XP doğru hesaplanmalı; öncelikli kart diğer kazanımları sonraki aynı State'te tekrar kutlamamalı. Altın harcama kayıp veya sahte kazanç olarak gösterilmemeli; harcama sonrasındaki gerçek ödül doğru görünmeli.
+3. Normal yaratık, elit ve boss ad/can çubuklarını farklı uzaklıklarda incele. Aynı anda en fazla 12 özel etiket olmalı; ölüm, yeniden doğma, streaming çıkışı ve arayüz kapanışında eski yerleşik etiketler doğru geri gelmeli. Çubuklar duvarın arkasından görünmemeli, dokunma veya hedef seçimini engellememeli.
+4. Savaşçı alan darbesi ile büyücü alan büyüsünün renk/şekil farkını, mermi ve iyileştirme sunumlarını karşılaştır. İsabet kıvılcımları ve sayılar yalnız sunucunun kabul ettiği gerçek can değişiminde görünmeli; tam candaki iyileştirme, boşa veya engellenmiş vuruş sahte sayı üretmemeli.
+5. Dört istemciyle yoğun saldırıda yerel efekt parçası sınırı 100, isabet sayısı görünümü sınırı 30 ve ödül kuyruğu sınırı korunmalı. Ölüm/yeniden doğma ve GUI kaldırma sonrasında efekt, bağlantı, kart veya sayı kalmamalı. Görsel efektler fizik/raycast ve sunucu hasarını değiştirmemeli.
+6. Küçük mobil ekran ve gamepad'de ödül kartının hareket/atlama/yetenek kontrollerini veya hedef canını kapatmadığını kontrol et. Kartlar sohbet/modal açıkken etkileşimi ele geçirmemeli. Kamera sarsıntısı veya istemciden yeni ödül/hasar isteği üretilmemeli.
+
+Saf feedback testleri hesap ve tekrar korumasını sınar. Gerçek çizim, BillboardGui görünümü, efekt zamanlaması ve düşük cihaz performansı Studio/istemciyle ayrıca kontrol edilmelidir.

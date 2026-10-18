@@ -72,13 +72,15 @@ Theme.gradient(attackButton, Color3.fromRGB(242, 255, 251), Color3.fromRGB(133, 
 local toast = panel(UDim2.fromOffset(350, 65), UDim2.new(0.5, 0, 0, 12), Vector2.new(0.5, 0))
 toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
+local progressionFeedback = require(script.Parent:WaitForChild("ProgressionFeedback")).create(gui, create, label, colors)
 local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
 local targetHUD = require(script.Parent:WaitForChild("TargetHUD"))
 targetHUD.start(gui, create, label, colors, function() return worldHUD.open end)
 require(script.Parent:WaitForChild("PetVisuals")).start()
-require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"))
-require(script.Parent:WaitForChild("CombatText")).start(remotes:WaitForChild("CombatHit"))
+require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"), remotes:WaitForChild("CombatHit"), gui)
+require(script.Parent:WaitForChild("CombatText")).start(remotes:WaitForChild("CombatHit"), gui)
 require(script.Parent:WaitForChild("WorldMotion")).start(gui)
+require(script.Parent:WaitForChild("EnemyPresentation")).start(gui)
 
 local scales = {}
 for _, frame in ipairs({ stats, quest, hint, attackButton, toast }) do
@@ -111,6 +113,7 @@ local function resize()
 		toast.AnchorPoint = Vector2.zero
 	end
 	worldHUD:resize(viewport)
+	progressionFeedback:resize(viewport)
 end
 local viewportConnection
 local function watchCamera()
@@ -157,6 +160,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
 		local objects = player.PlayerGui:GetGuiObjectsAtPosition(input.Position.X, input.Position.Y)
 		for _, object in ipairs(objects) do
+			if object:GetAttribute("AetheriaPassiveVisual") == true then continue end
 			if object.Visible and (object:IsDescendantOf(gui) or object:IsA("GuiButton") or object:IsA("TextBox") or object.Active) then return end
 		end
 		attack()
@@ -190,6 +194,7 @@ stateRemote.OnClientEvent:Connect(function(state)
 	xpFill.Size = UDim2.fromScale(math.clamp(xp / needed, 0, 1), 1)
 	goldText.Text = string.format("Altın %d  •  Yıldız tozu %d", state.gold or 0, state.stardust or 0)
 	worldHUD:setState(state)
+	progressionFeedback:setState(state)
 	targetHUD.setState(state)
 	if state.questStatus == "active" then
 		questText.Text = string.format("Ormanı koru: %d / %d yaratık yenildi.", state.questKills or 0, state.questTarget or 3)
