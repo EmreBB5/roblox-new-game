@@ -18,7 +18,8 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 gui.Parent = player:WaitForChild("PlayerGui")
 
-local colors = { panel = Color3.fromRGB(17, 32, 29), text = Color3.fromRGB(243, 237, 213), muted = Color3.fromRGB(176, 199, 184), gold = Color3.fromRGB(231, 190, 96), health = Color3.fromRGB(98, 194, 139), xp = Color3.fromRGB(126, 165, 235) }
+local Theme = require(script.Parent:WaitForChild("UITheme"))
+local colors = Theme.colors
 local function create(className, properties, parent)
 	local object = Instance.new(className)
 	for key, value in pairs(properties) do object[key] = value end
@@ -29,6 +30,7 @@ local function panel(size, position, anchor)
 	local frame = create("Frame", { Size = size, Position = position, AnchorPoint = anchor or Vector2.zero, BackgroundColor3 = colors.panel, BackgroundTransparency = 0.12, BorderSizePixel = 0 }, gui)
 	create("UICorner", { CornerRadius = UDim.new(0, 12) }, frame)
 	create("UIStroke", { Color = colors.gold, Transparency = 0.65 }, frame)
+	Theme.panel(frame)
 	return frame
 end
 local function label(parent, text, position, size, textSize, color)
@@ -39,11 +41,13 @@ local function bar(parent, y, color)
 	create("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
 	local fill = create("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = color, BorderSizePixel = 0 }, track)
 	create("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+	Theme.gradient(fill, Color3.fromRGB(240, 255, 255), Color3.fromRGB(124, 192, 223), 0)
 	return fill
 end
 
 local stats = panel(UDim2.fromOffset(270, 155), UDim2.fromOffset(12, 12))
-label(stats, "AETHERIA", UDim2.fromOffset(14, 8), UDim2.new(1, -28, 0, 25), 23, colors.gold)
+local brand = label(stats, "AETHERIA / UFUKLAR", UDim2.fromOffset(14, 8), UDim2.new(1, -28, 0, 25), 18, colors.gold)
+brand.Font = Enum.Font.GothamBold
 local regionLabel = label(stats, "GÜVENLİ KÖY", UDim2.fromOffset(15, 33), UDim2.new(1, -28, 0, 18), 11, colors.muted)
 require(script.Parent:WaitForChild("BiomeAmbience")).start(regionLabel)
 local healthText = label(stats, "Can • —", UDim2.fromOffset(14, 56), UDim2.new(1, -28, 0, 20))
@@ -53,16 +57,18 @@ local xpFill = bar(stats, 116, colors.xp)
 local goldText = label(stats, "Altın 0", UDim2.fromOffset(14, 129), UDim2.new(1, -28, 0, 18), 12, colors.gold)
 
 local quest = panel(UDim2.fromOffset(270, 132), UDim2.fromOffset(12, 177))
-label(quest, "ORMANIN ÇAĞRISI", UDim2.fromOffset(14, 9), UDim2.new(1, -28, 0, 22), 14, colors.gold)
+local questHeading = label(quest, "◆  ORMANIN ÇAĞRISI", UDim2.fromOffset(14, 9), UDim2.new(1, -28, 0, 22), 13, colors.gold)
+questHeading.Font = Enum.Font.GothamBold
 local questText = label(quest, "Muhafızı bul ve görevini al.", UDim2.fromOffset(14, 35), UDim2.new(1, -28, 0, 47), 14)
 local crystalText = label(quest, "Kristal • Henüz kazanılmadı", UDim2.fromOffset(14, 86), UDim2.new(1, -28, 0, 20), 12, colors.muted)
 local saveText = label(quest, "", UDim2.fromOffset(14, 109), UDim2.new(1, -28, 0, 18), 10, colors.muted)
 
 local hint = panel(UDim2.fromOffset(350, 48), UDim2.new(0.5, 0, 1, -12), Vector2.new(0.5, 1))
 local hintText = label(hint, "Muhafıza yaklaş • Görevi al • Ormanı koru", UDim2.fromOffset(12, 4), UDim2.new(1, -24, 1, -8), 12, colors.muted)
-local attackButton = create("TextButton", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -155), Size = UDim2.fromOffset(112, 76), BackgroundColor3 = Color3.fromRGB(78, 99, 59), TextColor3 = colors.text, Text = "SALDIR\nSol tık / F", TextSize = 16, Font = Enum.Font.GothamBold, AutoButtonColor = true, BorderSizePixel = 0 }, gui)
+local attackButton = create("TextButton", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -155), Size = UDim2.fromOffset(112, 76), BackgroundColor3 = colors.button, TextColor3 = colors.text, Text = "SALDIR\nSol tık / F", TextSize = 16, Font = Enum.Font.GothamBold, AutoButtonColor = true, BorderSizePixel = 0 }, gui)
 create("UICorner", { CornerRadius = UDim.new(0, 22) }, attackButton)
 create("UIStroke", { Color = colors.gold, Transparency = 0.3 }, attackButton)
+Theme.gradient(attackButton, Color3.fromRGB(242, 255, 251), Color3.fromRGB(133, 194, 227))
 local toast = panel(UDim2.fromOffset(350, 65), UDim2.new(0.5, 0, 0, 12), Vector2.new(0.5, 0))
 toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
@@ -72,6 +78,7 @@ targetHUD.start(gui, create, label, colors, function() return worldHUD.open end)
 require(script.Parent:WaitForChild("PetVisuals")).start()
 require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"))
 require(script.Parent:WaitForChild("CombatText")).start(remotes:WaitForChild("CombatHit"))
+require(script.Parent:WaitForChild("WorldMotion")).start(gui)
 
 local scales = {}
 for _, frame in ipairs({ stats, quest, hint, attackButton, toast }) do
@@ -141,7 +148,7 @@ local function attack()
 	local preferred = targetHUD.getTarget()
 	if preferred then attackRemote:FireServer(preferred) else attackRemote:FireServer() end
 	attackButton.BackgroundColor3 = colors.gold
-	TweenService:Create(attackButton, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(78, 99, 59) }):Play()
+	TweenService:Create(attackButton, TweenInfo.new(0.2), { BackgroundColor3 = colors.button }):Play()
 end
 attackButton.Activated:Connect(attack)
 UserInputService.InputBegan:Connect(function(input, processed)

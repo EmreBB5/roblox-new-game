@@ -33,7 +33,7 @@ function ContractHUD.create(gui, parent, remotes, make, label, button, colors)
 	for index, id in ipairs(order) do
 		local definition = Config.RegionalContracts[id]
 		local y = 470 + (index - 1) * 194
-		local card = make("Frame", {Position = UDim2.fromOffset(0, y), Size = UDim2.new(1, -6, 0, 184), BackgroundColor3 = Color3.fromRGB(25, 43, 37), BorderSizePixel = 0}, parent)
+		local card = make("Frame", {Position = UDim2.fromOffset(0, y), Size = UDim2.new(1, -6, 0, 184), BackgroundColor3 = Color3.fromRGB(18, 36, 56), BorderSizePixel = 0}, parent)
 		make("UICorner", {CornerRadius = UDim.new(0, 10)}, card)
 		label(card, definition.Name, UDim2.fromOffset(10, 4), UDim2.new(1, -20, 0, 24), 14, colors.gold)
 		local progress = label(card, "", UDim2.fromOffset(10, 31), UDim2.new(1, -20, 0, 54), 12)
@@ -67,7 +67,7 @@ function ContractHUD.create(gui, parent, remotes, make, label, button, colors)
 				local enabled = nearby and not completed and (state.status == "available" or ready)
 				card.action.Text = completed and "TAMAMLANDI" or (not nearby and "BÖLGE PANOSUNA YAKLAŞ" or (ready and "ÖDÜLÜ AL" or (state.status == "available" and "GÖREVİ AL" or "HEDEFLERİ TAMAMLA")))
 				card.action.Selectable, card.action.AutoButtonColor = enabled, enabled
-				card.action.BackgroundColor3 = enabled and Color3.fromRGB(46, 85, 69) or Color3.fromRGB(38, 47, 47)
+				card.action.BackgroundColor3 = enabled and Color3.fromRGB(31, 75, 91) or Color3.fromRGB(24, 35, 51)
 			end
 			task.wait(0.25)
 		end

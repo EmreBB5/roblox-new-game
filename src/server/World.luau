@@ -3,6 +3,7 @@ local Lighting = game:GetService("Lighting")
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.GameConfig)
+local WorldLandmarks = require(script.Parent.WorldLandmarks)
 local World = {}
 local weaponRequests = setmetatable({}, {__mode = "k"})
 local gatherOffsets = {Vector3.new(-110, 0, 55), Vector3.new(105, 0, 65), Vector3.new(-120, 0, -40), Vector3.new(125, 0, -60), Vector3.new(-65, 0, 110)}
@@ -31,6 +32,12 @@ local function part(parent, name, size, position, color, material)
 	return item
 end
 
+local function trim(parent, name, size, position, color, material)
+	local item = part(parent, name, size, position, color, material)
+	item.CanCollide, item.CanTouch, item.CanQuery = false, false, false
+	return item
+end
+
 local function label(adornee, title, subtitle, width)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "WorldLabel"
@@ -39,15 +46,16 @@ local function label(adornee, title, subtitle, width)
 	billboard.MaxDistance = 100
 	billboard.Adornee = adornee
 	billboard.Parent = adornee
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.Text = title .. "\n" .. subtitle
-	text.TextColor3 = palette.gold
-	text.TextStrokeTransparency = 0.35
-	text.TextSize = 17
-	text.Font = Enum.Font.GothamBold
-	text.Parent = billboard
+	local function textLine(name, value, y, height, size, color, font)
+		local text = Instance.new("TextLabel")
+		text.Name, text.BackgroundTransparency = name, 1
+		text.Position, text.Size = UDim2.fromOffset(0, y), UDim2.new(1, 0, 0, height)
+		text.Text, text.TextColor3, text.TextSize, text.Font = value, color, size, font
+		text.TextStrokeColor3, text.TextStrokeTransparency = Color3.fromRGB(13, 26, 39), 0.3
+		text.TextWrapped, text.Parent = true, billboard
+	end
+	textLine("Title", title, 0, 27, 17, palette.gold, Enum.Font.GothamBold)
+	textLine("Subtitle", subtitle, 28, 34, 12, Color3.fromRGB(220, 236, 236), Enum.Font.GothamMedium)
 	return billboard
 end
 
@@ -80,22 +88,51 @@ end
 local function house(parent, position, yaw)
 	local model = Instance.new("Model")
 	model.Name = "VillageHouse"
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 	model.Parent = parent
 	local base = CFrame.new(position) * CFrame.Angles(0, yaw, 0)
-	local function block(name, size, offset, color, material)
+	local function block(name, size, offset, color, material, tilt)
 		local item = part(model, name, size, Vector3.zero, color, material)
-		item.CFrame = base * CFrame.new(offset)
+		item.CFrame = base * CFrame.new(offset) * (tilt or CFrame.identity)
+		if name ~= "Foundation" and name ~= "Walls" then
+			item.CanCollide, item.CanTouch, item.CanQuery = false, false, false
+		end
 		return item
 	end
-	block("Foundation", Vector3.new(19, 2, 16), Vector3.new(0, 1, 0), palette.stone, Enum.Material.Slate)
-	block("Walls", Vector3.new(17, 10, 14), Vector3.new(0, 7, 0), Color3.fromRGB(204, 181, 141))
-	block("Roof", Vector3.new(21, 3, 18), Vector3.new(0, 13, 0), palette.roof, Enum.Material.Slate)
-	block("Door", Vector3.new(4, 7, 0.3), Vector3.new(0, 5.5, 7.2), palette.wood, Enum.Material.Wood)
-	for _, x in {-5.5, 5.5} do
-		block("Window", Vector3.new(2.8, 3, 0.3), Vector3.new(x, 8, 7.25), palette.gold, Enum.Material.Neon)
-		block("Timber", Vector3.new(0.7, 10, 0.6), Vector3.new(x * 1.45, 7, 7.2), palette.wood, Enum.Material.Wood)
+	local plaster = Color3.fromRGB(221, 203, 169)
+	local slate = Color3.fromRGB(49, 76, 95)
+	block("Foundation", Vector3.new(19, 2, 16), Vector3.new(0, 1, 0), palette.stone, Enum.Material.Cobblestone)
+	block("Walls", Vector3.new(17, 10, 14), Vector3.new(0, 7, 0), plaster)
+	for _, side in {-1, 1} do
+		block("PitchedRoof", Vector3.new(11.7, 1, 19), Vector3.new(side * 5.1, 13.9, 0), slate, Enum.Material.Slate, CFrame.Angles(0, 0, -side * math.rad(28)))
+		block("RoofFascia", Vector3.new(12, 0.45, 0.5), Vector3.new(side * 5.1, 13.9, 9.6), palette.wood, Enum.Material.Wood, CFrame.Angles(0, 0, -side * math.rad(28)))
+		block("CornerTimber", Vector3.new(0.7, 10.5, 0.65), Vector3.new(side * 8.3, 7, 7.2), palette.wood, Enum.Material.Wood)
+		block("SideTimber", Vector3.new(0.7, 10.5, 0.65), Vector3.new(side * 8.3, 7, -7.2), palette.wood, Enum.Material.Wood)
+		block("SideSill", Vector3.new(0.5, 0.55, 14), Vector3.new(side * 8.6, 4.2, 0), palette.wood, Enum.Material.Wood)
 	end
-	block("Chimney", Vector3.new(3, 6, 3), Vector3.new(5, 15, -3), palette.stone, Enum.Material.Brick)
+	block("RoofRidge", Vector3.new(0.7, 0.7, 20), Vector3.new(0, 16.65, 0), palette.wood, Enum.Material.Wood)
+	for _, y in {2.5, 11.8} do
+		block("FrontCrossbeam", Vector3.new(17.5, 0.65, 0.7), Vector3.new(0, y, 7.25), palette.wood, Enum.Material.Wood)
+	end
+	block("DoorFrame", Vector3.new(4.8, 7.8, 0.6), Vector3.new(0, 5.5, 7.2), palette.wood, Enum.Material.Wood)
+	block("Door", Vector3.new(3.6, 6.9, 0.65), Vector3.new(0, 5.1, 7.25), Color3.fromRGB(111, 85, 62), Enum.Material.WoodPlanks)
+	block("DoorLatch", Vector3.new(0.22, 0.45, 0.2), Vector3.new(1.15, 5.2, 7.65), palette.gold, Enum.Material.Metal)
+	for _, x in {-5.4, 5.4} do
+		block("WindowFrame", Vector3.new(3.5, 3.8, 0.5), Vector3.new(x, 8, 7.25), palette.wood, Enum.Material.Wood)
+		local glass = block("WarmWindow", Vector3.new(2.7, 3, 0.15), Vector3.new(x, 8, 7.55), Color3.fromRGB(255, 202, 124), Enum.Material.Neon)
+		block("WindowMullion", Vector3.new(0.18, 3.2, 0.2), Vector3.new(x, 8, 7.7), palette.wood, Enum.Material.Wood)
+		block("WindowCrossbar", Vector3.new(2.9, 0.18, 0.2), Vector3.new(x, 8.2, 7.7), palette.wood, Enum.Material.Wood)
+		block("FlowerBox", Vector3.new(3.7, 0.7, 1.1), Vector3.new(x, 6.05, 7.9), palette.wood, Enum.Material.WoodPlanks)
+		for index = -1, 1 do
+			local flower = block("WindowFlowers", Vector3.new(0.65, 0.75, 0.65), Vector3.new(x + index, 6.8, 7.9), index == 0 and Color3.fromRGB(236, 165, 140) or Color3.fromRGB(160, 190, 131), Enum.Material.Grass)
+			flower.Shape = Enum.PartType.Ball
+		end
+		local light = Instance.new("PointLight")
+		light.Color, light.Brightness, light.Range, light.Shadows = glass.Color, 0.45, 9, false
+		light.Parent = glass
+	end
+	block("Chimney", Vector3.new(3, 6, 3), Vector3.new(5, 16, -3), palette.stone, Enum.Material.Brick)
+	block("ChimneyCap", Vector3.new(3.7, 0.6, 3.7), Vector3.new(5, 19.2, -3), palette.stone, Enum.Material.Slate)
 end
 
 local function guardian(parent)
@@ -111,6 +148,13 @@ local function guardian(parent)
 	part(model, "Hat", Vector3.new(2, 2, 2), Vector3.new(15, 7.2, 0), palette.roof)
 	part(model, "Staff", Vector3.new(0.3, 6.5, 0.3), Vector3.new(17.3, 3.25, 0), palette.wood, Enum.Material.Wood)
 	crystal(model, Vector3.new(17.3, 6.5, 0), 0.4)
+	trim(model, "RobeBelt", Vector3.new(2.9, 0.45, 2.1), Vector3.new(15, 2.2, 0), palette.gold, Enum.Material.Metal)
+	trim(model, "Spellbook", Vector3.new(1.1, 1.5, 0.4), Vector3.new(13.4, 3, 0), palette.roof, Enum.Material.Fabric)
+	trim(model, "HatBand", Vector3.new(2.1, 0.35, 2.1), Vector3.new(15, 6.7, 0), palette.gold, Enum.Material.Metal)
+	for _, side in {-1, 1} do
+		trim(model, "KeeperEyes", Vector3.new(0.18, 0.2, 0.12), Vector3.new(15 + side * 0.32, 5.45, 0.85), Color3.fromRGB(56, 73, 90))
+		trim(model, "KeeperShoulder", Vector3.new(0.9, 0.6, 2.1), Vector3.new(15 + side * 1.1, 4.1, 0), palette.roof, Enum.Material.Fabric)
+	end
 	label(head, "ELDRİN", "Ormanın Muhafızı")
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "QuestPrompt"
@@ -140,6 +184,13 @@ local function blacksmith(parent)
 	part(model, "AnvilBase", Vector3.new(3.4, 1.3, 2), Vector3.new(-9, 0.9, 12), palette.stone, Enum.Material.Metal)
 	part(model, "AnvilTop", Vector3.new(5, 0.7, 2.2), Vector3.new(-9, 2, 12), Color3.fromRGB(77, 85, 95), Enum.Material.Metal)
 	part(model, "ForgeCoals", Vector3.new(3.5, 0.4, 3.5), Vector3.new(-20, 0.6, 15), Color3.fromRGB(255, 143, 82), Enum.Material.Neon)
+	trim(model, "SmithBelt", Vector3.new(2.8, 0.4, 1.7), Vector3.new(-14, 2, 12), palette.wood, Enum.Material.Fabric)
+	trim(model, "SmithBuckle", Vector3.new(0.6, 0.5, 0.15), Vector3.new(-14, 2, 11.1), palette.gold, Enum.Material.Metal)
+	trim(model, "HammerHandle", Vector3.new(0.25, 1.7, 0.25), Vector3.new(-12.2, 2.9, 12), palette.wood, Enum.Material.Wood)
+	trim(model, "HammerHead", Vector3.new(1.2, 0.65, 0.7), Vector3.new(-12.2, 3.8, 12), palette.stone, Enum.Material.Metal)
+	for _, side in {-1, 1} do
+		trim(model, "SmithEyes", Vector3.new(0.18, 0.2, 0.12), Vector3.new(-14 + side * 0.32, 5.15, 11.15), Color3.fromRGB(53, 64, 78))
+	end
 	label(head, "BORİN · DEMİRCİ", "Donanım yükseltme · Tarifler: C", 280)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "ForgePrompt"
@@ -425,6 +476,11 @@ local function explorationSites(parent)
 				end
 			end
 		end
+		for _, side in {-1, 1} do
+			trim(model, "CampFlagPole", Vector3.new(0.3, 8, 0.3), center + Vector3.new(side * 18, 4, 14), palette.wood, Enum.Material.Wood)
+			trim(model, "RegionalPennant", Vector3.new(2.5, 3.7, 0.18), center + Vector3.new(side * 18 + 1.2, 5.8, 14), colors.accent, Enum.Material.Fabric)
+			trim(model, "PennantSeal", Vector3.new(0.35, 2.6, 0.2), center + Vector3.new(side * 18 + 1.2, 5.8, 14.12), palette.gold, Enum.Material.Metal)
+		end
 		local discoveryPosition = center + Vector3.new(0, 3, 24)
 		local stone = part(model, "DiscoveryStone", Vector3.new(3, 4, 1.4), discoveryPosition, palette.stone, Enum.Material.Slate)
 		stone.CanCollide = false
@@ -436,6 +492,13 @@ local function explorationSites(parent)
 		discovery.Parent = stone
 		local chestPosition = center + Vector3.new(0, 2, -12)
 		part(model, "ChestBody", Vector3.new(5, 2.4, 3.2), center + Vector3.new(0, 1.5, -12), palette.wood, Enum.Material.WoodPlanks)
+		trim(model, "TreasureLock", Vector3.new(0.7, 1, 0.25), center + Vector3.new(0, 2.3, -10.25), palette.gold, Enum.Material.Metal)
+		for _, side in {-1, 1} do
+			trim(model, "TreasureHinge", Vector3.new(0.7, 0.5, 0.4), center + Vector3.new(side * 1.6, 2.7, -13.6), palette.gold, Enum.Material.Metal)
+			for _, y in {0.65, 2.35} do
+				trim(model, "ChestRivet", Vector3.new(0.22, 0.22, 0.18), center + Vector3.new(side * 2.1, y, -10.3), palette.gold, Enum.Material.Metal).Shape = Enum.PartType.Ball
+			end
+		end
 		local lid = part(model, "ChestLid", Vector3.new(5.2, 0.55, 3.4), center + Vector3.new(0, 2.95, -12), palette.gold, Enum.Material.Metal)
 		for _, side in {-1, 1} do
 			part(model, "ChestBand", Vector3.new(0.35, 2.4, 3.3), center + Vector3.new(side * 1.6, 1.5, -12), palette.gold, Enum.Material.Metal)
@@ -559,15 +622,27 @@ function World.build()
 	local folder = Instance.new("Folder")
 	folder.Name = "AetheriaWorld"
 	folder.Parent = workspace
-	Lighting.ClockTime = 15.5
-	Lighting.Brightness = 2.5
-	Lighting.Ambient = Color3.fromRGB(104, 119, 141)
-	Lighting.OutdoorAmbient = Color3.fromRGB(131, 146, 161)
+	Lighting.ClockTime = 17.1
+	Lighting.Brightness = 2.2
+	Lighting.GlobalShadows = true
+	Lighting.EnvironmentDiffuseScale = 0.65
+	Lighting.EnvironmentSpecularScale = 0.75
+	Lighting.ExposureCompensation = -0.1
+	Lighting.Ambient = Color3.fromRGB(90, 109, 134)
+	Lighting.OutdoorAmbient = Color3.fromRGB(130, 149, 165)
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.19
-	atmosphere.Color = Color3.fromRGB(197, 217, 223)
-	atmosphere.Decay = Color3.fromRGB(104, 126, 145)
+	atmosphere.Name = "AetheriaAtmosphere"
+	atmosphere.Density, atmosphere.Offset = 0.22, 0.1
+	atmosphere.Glare, atmosphere.Haze = 0.15, 1.15
+	atmosphere.Color = Color3.fromRGB(215, 227, 235)
+	atmosphere.Decay = Color3.fromRGB(124, 145, 170)
 	atmosphere.Parent = Lighting
+	local bloom = Instance.new("BloomEffect")
+	bloom.Name, bloom.Intensity, bloom.Size, bloom.Threshold = "AetheriaSoftBloom", 0.18, 24, 1.7
+	bloom.Parent = Lighting
+	local sun = Instance.new("SunRaysEffect")
+	sun.Name, sun.Intensity, sun.Spread = "AetheriaSunRays", 0.035, 0.75
+	sun.Parent = Lighting
 	local bounds = Config.MapBounds
 	-- BasePart dimensions are limited to 2048 studs; tile the expanded world.
 	for x = bounds.MinX, bounds.MaxX - 1, 1000 do
@@ -687,6 +762,7 @@ function World.build()
 	local waypoints = travelShrines(folder)
 	local contractBoards = regionalContractBoards(folder)
 	local discoveries = explorationSites(folder)
+	WorldLandmarks.decorate(folder)
 	local enemySpawns = {}
 	for id, region in Config.Regions do
 		for _, offset in {Vector3.new(-58, 0, 42), Vector3.new(52, 0, 37), Vector3.new(-74, 0, -27), Vector3.new(72, 0, -32)} do
@@ -772,10 +848,19 @@ function World.equipWeapon(character, classId, tier)
 		local gem = piece("Focus", Vector3.new(0.85, 0.85, 0.85), CFrame.new(0, 2.35, 0), color, Enum.Material.Neon)
 		gem.Shape = Enum.PartType.Ball
 		piece("FocusRing", Vector3.new(1.4, 0.2, 0.6), CFrame.new(0, 1.9, 0), palette.gold, Enum.Material.Metal)
+		for _, side in {-1, 1} do
+			piece("FocusProng", Vector3.new(0.18, 1.1, 0.2), CFrame.new(side * 0.6, 2.25, 0) * CFrame.Angles(0, 0, -side * 0.3), palette.gold, Enum.Material.Metal)
+		end
+		piece("StaffBinding", Vector3.new(0.4, 0.75, 0.4), CFrame.new(0, -0.1, 0), Color3.fromRGB(67, 86, 113), Enum.Material.Fabric)
 	else
 		piece("Grip", Vector3.new(0.3, 1, 0.3), CFrame.new(), palette.wood, Enum.Material.Wood)
 		piece("Guard", Vector3.new(1.6, 0.25, 0.4), CFrame.new(0, 0.6, 0), palette.gold, Enum.Material.Metal)
 		piece("Blade", Vector3.new(0.45, 3, 0.18), CFrame.new(0, 2.1, 0), color, Enum.Material.Metal)
+		piece("BladeFuller", Vector3.new(0.09, 2.45, 0.2), CFrame.new(0, 2.1, 0), color:Lerp(Color3.new(1, 1, 1), 0.4), tier >= 2 and Enum.Material.Neon or Enum.Material.Metal)
+		piece("Pommel", Vector3.new(0.48, 0.45, 0.4), CFrame.new(0, -0.65, 0), palette.gold, Enum.Material.Metal)
+		for _, side in {-1, 1} do
+			piece("GuardTip", Vector3.new(0.3, 0.55, 0.4), CFrame.new(side * 0.8, 0.75, 0), palette.gold, Enum.Material.Metal)
+		end
 	end
 	weapon.Parent = character
 end
@@ -817,6 +902,48 @@ function World.createEnemy(folder, position, index, regionId)
 		local eye = part(model, "GlowingEye", Vector3.new(0.25, 0.2, 0.15), base + Vector3.new(x, 1.6, -0.55), colors.accent, Enum.Material.Neon)
 		joint("Eye", head, eye, Vector3.new(x, 0.1, -0.55))
 		eye.CanCollide = false
+	end
+	-- Silhouette details are welded cosmetics; the original rig/hitboxes stay authoritative.
+	local function detail(name, size, offset, tint, material)
+		local item = part(model, name, size, Vector3.zero, tint, material)
+		item.CFrame = torso.CFrame * offset
+		item.Anchored, item.Massless = false, true
+		item.CanCollide, item.CanTouch, item.CanQuery = false, false, false
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0, weld.Part1, weld.Parent = torso, item, item
+		return item
+	end
+	local kind = regionId or "forest"
+	if kind == "forest" then
+		detail("BarkBreastplate", Vector3.new(1.65, 1.65, 0.35), CFrame.new(0, 0, -0.65), palette.wood, Enum.Material.Wood)
+		for _, side in {-1, 1} do
+			detail("RootShoulder", Vector3.new(1.1, 0.6, 1.4), CFrame.new(side * 1.1, 0.8, 0), skin, Enum.Material.Grass)
+			detail("TwigCrest", Vector3.new(0.25, 1, 0.3), CFrame.new(side * 0.75, 2.25, 0) * CFrame.Angles(0, 0, -side * 0.35), palette.wood, Enum.Material.Wood)
+		end
+	elseif kind == "marsh" then
+		for _, side in {-1, 1} do
+			detail("TideFin", Vector3.new(0.25, 1.5, 1.25), CFrame.new(side * 1.05, 0.8, 0.2) * CFrame.Angles(0, 0, side * 0.35), colors.accent, Enum.Material.Glass)
+			detail("MistCrest", Vector3.new(0.3, 1.1, 0.6), CFrame.new(side * 0.6, 2.15, 0.2), skin, Enum.Material.Slate)
+		end
+		detail("TideHeart", Vector3.new(0.5, 0.7, 0.2), CFrame.new(0, 0.1, -0.65), colors.accent, Enum.Material.Neon)
+	elseif kind == "volcanic" then
+		for _, side in {-1, 1} do
+			detail("BasaltPauldron", Vector3.new(1.1, 1, 1.5), CFrame.new(side * 1.2, 0.65, 0), Color3.fromRGB(67, 59, 67), Enum.Material.Basalt)
+			detail("MagmaSeam", Vector3.new(0.15, 1.5, 0.15), CFrame.new(side * 0.5, 0, -0.65) * CFrame.Angles(0, 0, side * 0.18), colors.accent, Enum.Material.Neon)
+		end
+		detail("ObsidianBrow", Vector3.new(2.2, 0.35, 1.1), CFrame.new(0, 1.95, 0), Color3.fromRGB(65, 53, 62), Enum.Material.Basalt)
+	elseif kind == "frost" then
+		for _, side in {-1, 1} do
+			detail("IceShoulder", Vector3.new(1.1, 0.85, 1.5), CFrame.new(side * 1.1, 0.8, 0) * CFrame.Angles(0, 0, side * 0.22), colors.accent, Enum.Material.Ice)
+		end
+		detail("IceCrest", Vector3.new(0.5, 1.3, 0.5), CFrame.new(0, 2.2, 0), colors.accent, Enum.Material.Ice)
+		detail("FrozenChestRune", Vector3.new(0.4, 0.9, 0.15), CFrame.new(0, 0.1, -0.65), Color3.fromRGB(214, 253, 255), Enum.Material.Neon)
+	else
+		detail("SandstoneMask", Vector3.new(2.2, 0.35, 1.2), CFrame.new(0, 1.9, 0), palette.gold, Enum.Material.Metal)
+		detail("SunChest", Vector3.new(1.7, 1.6, 0.25), CFrame.new(0, 0.1, -0.65), colors.skin, Enum.Material.Sandstone)
+		for _, side in {-1, 1} do
+			detail("DesertScarf", Vector3.new(0.5, 1.7, 0.25), CFrame.new(side * 0.65, -0.8, 0.75), Color3.fromRGB(81, 137, 144), Enum.Material.Fabric)
+		end
 	end
 	local humanoid = Instance.new("Humanoid")
 	humanoid.DisplayName = region.EnemyName

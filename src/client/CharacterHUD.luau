@@ -42,7 +42,7 @@ function CharacterHUD.create(gui, parent, remotes, make, label, button, colors, 
 	local targetInfo = label(hotbar, "", UDim2.fromOffset(9, 17), UDim2.new(1, -18, 0, 14), 9, colors.muted)
 	targetInfo.TextWrapped, targetInfo.TextTruncate = false, Enum.TextTruncate.AtEnd
 	targetInfo.Visible = false
-	local resourceTrack = make("Frame", { Size = UDim2.new(1, -18, 0, 4), Position = UDim2.fromOffset(9, 23), BackgroundColor3 = Color3.fromRGB(40, 55, 66), BorderSizePixel = 0 }, hotbar)
+	local resourceTrack = make("Frame", { Size = UDim2.new(1, -18, 0, 4), Position = UDim2.fromOffset(9, 23), BackgroundColor3 = Color3.fromRGB(22, 39, 60), BorderSizePixel = 0 }, hotbar)
 	local fill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(115, 169, 239), BorderSizePixel = 0 }, resourceTrack)
 	local skills, lastCast = {}, 0
 	local function cast(slot)
@@ -158,7 +158,7 @@ function CharacterHUD.create(gui, parent, remotes, make, label, button, colors, 
 					local remaining = math.max(0, ((state.cooldowns or {})[slot] or 0) - workspace:GetServerTimeNow())
 					local key = input == Enum.UserInputType.Touch and "" or (string.find(input.Name, "Gamepad") and (index == 1 and "L1 • " or "R1 • ") or (index == 1 and "Q • " or "R • "))
 					skills[slot].Text = key .. ability.Name .. "\n" .. (remaining > 0 and string.format("%.1f sn", remaining) or (ability.Cost .. " enerji"))
-					skills[slot].BackgroundColor3 = remaining <= 0 and value >= ability.Cost and Color3.fromRGB(50, 85, 84) or Color3.fromRGB(38, 47, 47)
+					skills[slot].BackgroundColor3 = remaining <= 0 and value >= ability.Cost and Color3.fromRGB(32, 83, 105) or Color3.fromRGB(24, 35, 51)
 				end
 			end
 			task.wait(0.1)

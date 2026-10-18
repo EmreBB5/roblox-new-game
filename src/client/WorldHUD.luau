@@ -4,6 +4,8 @@ local GuiService = game:GetService("GuiService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("GameConfig"))
 local WorldMap = require(game:GetService("ReplicatedStorage").Shared:WaitForChild("WorldMap"))
 local PetGrowth = require(game:GetService("ReplicatedStorage").Shared:WaitForChild("PetGrowth"))
+local Theme = require(script.Parent:WaitForChild("UITheme"))
+local PetPreview = require(script.Parent:WaitForChild("PetPreview"))
 local WorldHUD = {}
 
 function WorldHUD.create(gui, remotes, make, label, colors)
@@ -12,33 +14,45 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		local item = make("Frame", {Size = size, Position = position, AnchorPoint = anchor or Vector2.zero, BackgroundColor3 = colors.panel, BackgroundTransparency = 0.06, BorderSizePixel = 0, Active = true}, parent)
 		make("UICorner", {CornerRadius = UDim.new(0, 12)}, item)
 		make("UIStroke", {Color = colors.gold, Transparency = 0.65}, item)
+		Theme.panel(item)
 		return item
 	end
 	local function button(parent, text, position, size, callback)
-		local item = make("TextButton", {Text = text, Position = position, Size = size, BackgroundColor3 = Color3.fromRGB(46, 70, 59), TextColor3 = colors.text, Font = Enum.Font.GothamBold, TextSize = 13, TextWrapped = true, BorderSizePixel = 0, Selectable = true}, parent)
+		local item = make("TextButton", {Text = text, Position = position, Size = size, BackgroundColor3 = colors.button, TextColor3 = colors.text, Font = Enum.Font.GothamBold, TextSize = 13, TextWrapped = true, BorderSizePixel = 0, Selectable = true}, parent)
 		make("UICorner", {CornerRadius = UDim.new(0, 8)}, item)
+		Theme.button(item)
 		item.Activated:Connect(callback)
 		return item
 	end
 	local events = frame(gui, UDim2.fromOffset(290, 188), UDim2.new(1, -12, 0, 12), Vector2.new(1, 0))
-	label(events, "DÜNYA MUHAFIZLARI", UDim2.fromOffset(12, 7), UDim2.new(1, -24, 0, 20), 14, colors.gold)
+	label(events, "◆  DÜNYA MUHAFIZLARI", UDim2.fromOffset(12, 7), UDim2.new(1, -24, 0, 20), 13, colors.gold).Font = Enum.Font.GothamBold
 	local clock = label(events, "İstanbul • Sunucu saati bekleniyor", UDim2.fromOffset(12, 29), UDim2.new(1, -24, 0, 17), 10, colors.muted)
 	local eventLabels, order = {}, Config.BossOrder
 	for index, id in ipairs(order) do
 		eventLabels[id] = label(events, Config.Bosses[id].Name .. "\nSaat bekleniyor…", UDim2.fromOffset(12, 51 + (index - 1) * 43), UDim2.new(1, -24, 0, 40), 12)
+		eventLabels[id].BackgroundColor3, eventLabels[id].BackgroundTransparency = Color3.fromRGB(30, 56, 78), 0.45
+		make("UICorner", {CornerRadius = UDim.new(0, 6)}, eventLabels[id])
+		make("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 4)}, eventLabels[id])
 	end
 	local eventScale = make("UIScale", {Scale = 1}, events)
 	local menu = frame(gui, UDim2.fromOffset(224, 102), UDim2.new(1, -12, 0, 210), Vector2.new(1, 0))
-	local overlay = make("Frame", {Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.3, Visible = false, Active = true, ZIndex = 5}, gui)
+	local overlay = make("Frame", {Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(3, 10, 24), BackgroundTransparency = 0.25, Visible = false, Active = true, ZIndex = 5}, gui)
 	local content = frame(overlay, UDim2.fromOffset(540, 560), UDim2.fromScale(0.5, 0.5), Vector2.new(0.5, 0.5))
 	content.ZIndex = 6
 	local title = label(content, "", UDim2.fromOffset(16, 8), UDim2.new(1, -108, 0, 44), 18, colors.gold)
+	title.Font = Enum.Font.GothamBold
 	local function body()
 		return make("ScrollingFrame", {Position = UDim2.fromOffset(16, 64), Size = UDim2.new(1, -32, 1, -76), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.fromOffset(0, 380), ScrollingDirection = Enum.ScrollingDirection.Y, ScrollBarThickness = 4, Active = true, Visible = false}, content)
 	end
 	local collection, characterPanel, mapPanel, partyPanel = body(), body(), body(), body()
-	local map = make("Frame", {BackgroundColor3 = Color3.fromRGB(26, 46, 40), BorderSizePixel = 0, Size = UDim2.new(1, -6, 0, 220), Position = UDim2.fromOffset(0, 0), ClipsDescendants = true}, mapPanel)
+	local map = make("Frame", {BackgroundColor3 = Color3.fromRGB(10, 28, 46), BorderSizePixel = 0, Size = UDim2.new(1, -6, 0, 220), Position = UDim2.fromOffset(0, 0), ClipsDescendants = true}, mapPanel)
 	make("UICorner", {CornerRadius = UDim.new(0, 10)}, map)
+	for index = 1, 7 do
+		make("Frame", {Position = UDim2.fromScale(index / 8, 0), Size = UDim2.new(0, 1, 1, 0), BackgroundColor3 = colors.teal, BackgroundTransparency = 0.94, BorderSizePixel = 0, Active = false}, map)
+	end
+	for index = 1, 4 do
+		make("Frame", {Position = UDim2.fromScale(0, index / 5), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = colors.teal, BackgroundTransparency = 0.94, BorderSizePixel = 0, Active = false}, map)
+	end
 	local mapHint = label(mapPanel, "", UDim2.fromOffset(2, 414), UDim2.new(1, -12, 0, 64), 12, colors.muted)
 	label(mapPanel, "SEÇKİN DEVRİYELER • Pet düşürmez", UDim2.fromOffset(2, 486), UDim2.new(1, -12, 0, 32), 13, colors.gold)
 	local eliteLabels = {}
@@ -72,28 +86,31 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 	require(script.Parent:WaitForChild("PartyHUD")).create(gui, partyPanel, remotes, make, label, button, colors, function(pending)
 		invitePending = pending
 		menuButtons[4].Text = pending and "GRUP !" or "GRUP"
-		menuButtons[4].BackgroundColor3 = pending and Color3.fromRGB(114, 91, 44) or Color3.fromRGB(46, 70, 59)
+			menuButtons[4].BackgroundColor3 = pending and Color3.fromRGB(114, 91, 44) or colors.button
 	end)
 	local cards = {}
 	for index, bossId in ipairs(order) do
 		local boss, petId = Config.Bosses[bossId], Config.Bosses[bossId].PetId
-		local card = frame(collection, UDim2.new(1, -6, 0, 154), UDim2.fromOffset(0, (index - 1) * 164))
+		local card = frame(collection, UDim2.new(1, -6, 0, 204), UDim2.fromOffset(0, (index - 1) * 214))
 		label(card, Config.Pets[petId].Name, UDim2.fromOffset(10, 4), UDim2.new(1, -20, 0, 24), 15, colors.gold)
-		local detail = label(card, "", UDim2.fromOffset(10, 30), UDim2.new(1, -112, 0, 68), 11, colors.muted)
-		local xpText = label(card, "", UDim2.fromOffset(10, 105), UDim2.new(1, -20, 0, 24), 11, colors.muted)
-		local xpTrack = make("Frame", {Position = UDim2.fromOffset(10, 134), Size = UDim2.new(1, -20, 0, 7), BackgroundColor3 = Color3.fromRGB(42, 57, 51), BorderSizePixel = 0, ClipsDescendants = true}, card)
+		local preview = PetPreview.create(card, petId)
+		local detail = label(card, "", UDim2.fromOffset(100, 32), UDim2.new(1, -110, 0, 76), 11, colors.muted)
+		local xpText = label(card, "", UDim2.fromOffset(10, 112), UDim2.new(1, -20, 0, 24), 11, colors.muted)
+		local xpTrack = make("Frame", {Position = UDim2.fromOffset(10, 139), Size = UDim2.new(1, -20, 0, 7), BackgroundColor3 = Color3.fromRGB(29, 47, 68), BorderSizePixel = 0, ClipsDescendants = true}, card)
 		make("UICorner", {CornerRadius = UDim.new(1, 0)}, xpTrack)
 		local xpFill = make("Frame", {Size = UDim2.fromScale(0, 1), BackgroundColor3 = colors.xp, BorderSizePixel = 0}, xpTrack)
 		make("UICorner", {CornerRadius = UDim.new(1, 0)}, xpFill)
-		local equip = button(card, "KİLİTLİ", UDim2.new(1, -96, 0, 42), UDim2.fromOffset(86, 44), function()
+		Theme.gradient(xpFill, Color3.fromRGB(190, 245, 255), Color3.fromRGB(120, 167, 255), 0)
+		label(card, "NADİR YOL ARKADAŞI", UDim2.fromOffset(10, 154), UDim2.new(1, -116, 0, 40), 10, colors.gold)
+		local equip = button(card, "KİLİTLİ", UDim2.new(1, -96, 0, 152), UDim2.fromOffset(86, 44), function()
 			if not (self.state.pets or {})[petId] then return end
 			remotes:WaitForChild("EquipPet"):FireServer(self.state.equippedPet == petId and "" or petId)
 		end)
-		cards[petId] = {detail = detail, equip = equip, bossId = bossId, xpText = xpText, xpFill = xpFill}
+		cards[petId] = {detail = detail, equip = equip, bossId = bossId, xpText = xpText, xpFill = xpFill, preview = preview}
 	end
 	local dropPercent = math.floor(Config.PetDropChance * 100 + 0.5)
-	label(collection, string.format("Uygun boss zaferinde %%%d şans • %d. denemede garanti\nKatılım: en az %d isabet ve boss canının %%%d'i kadar hasar.\nYalnızca takılı pet XP kazanır: normal +%d, seçkin +%d, boss +%d.\nSeçkinler pet düşürmez. Tüm petler aynı gelişim gücüne sahiptir.", dropPercent, Config.PetPityLimit, Config.BossMinAcceptedHits, math.floor(Config.BossMinDamageFraction * 100 + 0.5), Config.PetProgression.NormalXP, Config.PetProgression.EliteXP, Config.PetProgression.BossXP), UDim2.fromOffset(4, 496), UDim2.new(1, -12, 0, 142), 12, colors.muted)
-	collection.CanvasSize = UDim2.fromOffset(0, 646)
+	label(collection, string.format("BOSS HAZİNESİ • %%%d şans / %d. denemede garanti\nKatılım: %d isabet + en az %%%d hasar.\nTakılı pet XP: yaratık +%d / seçkin +%d / boss +%d.\nSeçkinlerden pet düşmez. Üç pet eşit güçte gelişir.", dropPercent, Config.PetPityLimit, Config.BossMinAcceptedHits, math.floor(Config.BossMinDamageFraction * 100 + 0.5), Config.PetProgression.NormalXP, Config.PetProgression.EliteXP, Config.PetProgression.BossXP), UDim2.fromOffset(4, 646), UDim2.new(1, -12, 0, 142), 12, colors.muted)
+	collection.CanvasSize = UDim2.fromOffset(0, 800)
 	local function mapPosition(x, z)
 		local u, v = WorldMap.normalized(x, z, Config)
 		return UDim2.fromScale(u or 0.5, v or 0.5)
@@ -150,6 +167,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 			card.equip.Text = state.equippedPet == id and "ÇIKAR" or (owned and "TAK" or "KİLİTLİ")
 			card.equip.Selectable, card.equip.AutoButtonColor = owned, owned
 			local info = owned and ((state.petStats or {})[id] or PetGrowth.info(state, id, Config))
+			card.preview:setState(owned, info and info.level or 1)
 			local bonus = info and info.bonus or Config.Pets[id].DamageBonus
 			card.detail.Text = string.format("%s • +%d hasar\n%s\nGaranti %d / %d", Config.Bosses[card.bossId].Name, bonus, owned and "Koleksiyonunda" or ("%" .. dropPercent .. " nadir düşüş"), (state.petPity or {})[card.bossId] or 0, Config.PetPityLimit)
 			if info then
@@ -240,7 +258,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 				item.Text = Config.Waypoints[id].Name .. "\n" .. (not unlocked and "Önce keşfet" or (atShrine == id and "Buradasın" or "Seyahat et • 3 sn"))
 				local enabled = unlocked and atShrine ~= nil and atShrine ~= id and not self.state.travel
 				item.Selectable, item.AutoButtonColor = enabled, enabled
-				item.BackgroundColor3 = enabled and Color3.fromRGB(46, 85, 69) or Color3.fromRGB(38, 47, 47)
+				item.BackgroundColor3 = enabled and Color3.fromRGB(31, 75, 91) or Color3.fromRGB(24, 35, 51)
 				waypointMarkers[id].TextColor3 = unlocked and colors.gold or colors.muted
 			end
 			local channel = self.state.travel
@@ -273,7 +291,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 					local near = root and boss.x and boss.z and (root.Position - Vector3.new(boss.x, root.Position.Y, boss.z)).Magnitude < 200
 					if alive and near then status = string.format("CAN %d / %d • %s", boss.health or 0, boss.maxHealth or 1, timeText((boss.despawnAt or now) - now)) end
 					if boss.status == "defeated" then status = "Yenildi • " .. status elseif boss.status == "expired" then status = "Süre doldu • " .. status end
-					line.Text, line.TextColor3 = cfg.Name .. "\n" .. status, alive and colors.gold or colors.text
+					line.Text, line.TextColor3 = cfg.Name .. "\n" .. status, alive and colors.teal or (boss.status == "defeated" and colors.muted or colors.text)
 					markers[boss.id].Position = mapPosition(boss.x or cfg.X, boss.z or cfg.Z)
 					markers[boss.id].TextColor3 = alive and Color3.fromRGB(255, 134, 100) or colors.gold
 				end

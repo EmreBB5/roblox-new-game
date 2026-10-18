@@ -99,3 +99,20 @@ Saf kurallar ve taklit ortamındaki servis akışları otomatik test edilmiştir
 8. Beş yol kolunda ve 10 stud genişliğindeki köprülerin iki girişinde yürüyüp zıpla. Korkuluklar, keşif taşı, kamp binaları ve sandık ortadaki geçişi engellememeli. Düşme, takılma ve zemin yüklenme boşluğu olmamalı.
 
 Otomatik testler saf ödül kurallarını ve gerçek servis metotlarının taklit edilmiş oyuncu/konum/guard akışlarını kapsar; Studio fiziği, görünüm ve gerçek DataStore ayrı doğrulanmalıdır.
+
+## v8 görsel yenileme ve performans
+
+1. Köyden beş bölgeye, türbelere ve keşif kamplarına yürü. Yeni bina, köprü ve çevre süsleri yolu, NPC/pano/keşif/sandık promptlarını veya iki muhafızın hareketini kapatmamalı. Işık ve renkler değişirken saldırı uyarıları, hedef canı ve güvenli bölge sınırı okunmalı.
+2. Normal yaratık, elit ve boss modellerinde vuruş/LOS denetimini karşılaştır. Dekoratif boynuz, kanat, parçacık ve yerel petler saldırıyı engellememeli; duvar gibi gerçek engellerden hasar geçmemeli. Tüm hasar, pet sahipliği ve ödül kararları sunucuda kalmalı.
+3. Düşük grafik ayarında ve mobil cihazda köy, yoğun orman, üç boss alanı ve iki elit alanını dolaş. Kare süresi, bellek, parça sayısı ve parçacık yoğunluğunu Studio istatistikleriyle gözle. Streaming sırasında boşlukta kalma, yarım kamp veya kaybolan prompt oluşmamalı. Otomatik kaynak kontrolü gerçek cihaz performansı ölçümü değildir.
+4. 320×568 ve 568×320 gibi küçük ekranlarda yeni tema, başlıklar, hedef paneli, enerji/yetenek düğmeleri ve kaydırılan günlükleri kontrol et. Dokunma hedefleri en az 44 px olmalı; hareket/atlama kontrolleri kapanmamalı. Menü veya sohbet açıkken savaş tuşları işlememeli.
+5. Pet önizlemeleri ve dünyadaki pet görünümü için sahip olunan/sahip olunmayan, farklı seviye ve kuşanma durumlarını dene. Önizleme yeni ödül veya sahiplik üretmemeli. Menü tekrar açıldığında kamera, model, bağlantı veya animasyon sayısı birikmemeli; ölüm/yeniden doğma sonrasında tek görünüm kalmalı.
+6. Aynı anda dört oyuncuyla savaş, büyü, pet ve ortam efektlerini çalıştır. Ekrandaki çizim ve parçacık bütçesi kabul edilebilir kalmalı; kozmetik parçalar karaktere çarpmamalı, raycast hedefi olmamalı veya sunucu savaş hesabını değiştirmemeli.
+
+Yapı taklit denetimi ve kaynak incelemesi yalnız kurulum/API/ölçü tutarlılığını sınar. Işık, model görünümü, fizik, gerçek streaming ve cihaz performansı Studio veya gerçek istemcide ayrıca değerlendirilmelidir.
+
+Ek v8 kontrolleri:
+
+- İki istemciyi farklı bölgelere götür. Her istemcide 110 stud içindeki en yakın en fazla 12 dünya ışığı yaklaşık 0,7 saniyede seçilmeli; bir istemcinin ışık/atmosfer ayarı diğerini değiştirmemeli. Arayüz kapanınca önceki yerel ışık durumu geri gelmeli.
+- Yaklaşan, duran, ölen ve yeniden doğan yaratıkları izle. Yerel yürüyüş hareketi kök konumu, hasar menzili veya sunucu hareketini değiştirmemeli. Uzaklaşınca/streaming çıkışında hareket temizlenmeli; yakın kristalin iç ve dış parçaları birlikte hareket etmeli. Kamera ve petler yürürken titreme veya biriken görünüm oluşmamalı.
+- İki oyuncuda pet koleksiyonunu tekrar açıp kapat. Üç boyutlu önizleme kameraları doğru peti göstermeli; sahiplik ve seviye yalnız ilgili oyuncunun kayıtlarına uymalı. Yeni görünüm pet düşürme, kuşanma veya ödül kararı vermemeli. Gerçek render döngüsü, kamera görüntüsü ve fizik bu otomatik kaynak denetiminde çalıştırılmamıştır.

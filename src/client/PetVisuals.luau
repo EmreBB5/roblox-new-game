@@ -71,6 +71,24 @@ function PetVisuals.start()
 						part.Parent = visual
 						if index == 1 then visual.PrimaryPart = part end
 					end
+					local function feature(name, size, offset, color, shape)
+						local detail = Instance.new("Part")
+						detail.Name, detail.Size, detail.Color = name, size, color
+						detail.Shape, detail.Material = shape or Enum.PartType.Ball, Enum.Material.SmoothPlastic
+						detail.Anchored, detail.CanCollide, detail.CanTouch, detail.CanQuery, detail.CastShadow = true, false, false, false, false
+						detail.CFrame, detail.Parent = root.CFrame * CFrame.new(offset), visual
+					end
+					for _, side in {-1, 1} do
+						feature("CompanionEye", Vector3.new(0.28, 0.3, 0.16), Vector3.new(side * 0.25, 0.2, -0.56), Color3.fromRGB(245, 255, 255))
+						feature("CompanionPupil", Vector3.new(0.13, 0.19, 0.1), Vector3.new(side * 0.25, 0.2, -0.65), Color3.fromRGB(19, 43, 61))
+						if id == "embercub" then
+							for _, z in {-0.35, 0.35} do feature("CubPaw", Vector3.new(0.42, 0.4, 0.45), Vector3.new(side * 0.5, -0.5, z), colors[id]) end
+						elseif id == "mossling" then
+							feature("FlowerBud", Vector3.new(0.32, 0.4, 0.32), Vector3.new(side * 0.28, 0.9, 0), Color3.fromRGB(237, 225, 149))
+						else
+							feature("FinTip", Vector3.new(0.7, 0.15, 0.65), Vector3.new(side * 1.65, -0.05, 0.15), Color3.fromRGB(217, 244, 255))
+						end
+					end
 					-- Level milestones add a segmented rune halo around the companion.
 					if level >= 3 then
 						local count = level >= 7 and 10 or 6

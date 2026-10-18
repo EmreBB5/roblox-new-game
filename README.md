@@ -24,6 +24,22 @@ Mobilde varsayılan Roblox hareket/atlama kontrolleri, **SALDIR**, iki yetenek, 
 
 Orman yaratıkları 10 XP, bataklık yaratıkları 30 XP, köz yaratıkları 50 XP, buzul yaratıkları 80 XP, çöl yaratıkları 110 XP verir. Başlangıç görevi yalnız orman yaratıklarıyla ilerler; ödülü 75 XP, 25 altın ve çantada gösterilen tek orman kristalidir. Kristal petlerden ayrı bir görev ödülüdür. Eldrin'le tekrar konuşarak görev yenilenebilir. Güvenli köy bölgesinde saldırı yapılmaz; normal canavarlar yeniden doğar.
 
+## Görsel yenileme · v8
+
+Köy artık eğimli arduvaz çatılar, ahşap kirişler, sıcak pencereler, çiçeklikler, çizgili pazar tezgâhları, kehribar fenerler ve kristal çeşmeyle karşılar. Eldrin/Borin'in yüz ve giysi ayrıntıları, silahların sap, kabza, rün ve odak parçaları belirginleşti. Kampların bölgesel flamaları ve sandıkların metal kilit/perçinleri var. Dünya etiketleri başlık ve açıklamayı farklı boyutta gösterir.
+
+| Biyom | Yeni simgesel yapı | Yerel atmosfer |
+|---|---|---|
+| Orman | Köklerle sarılmış taş kemer ve asılı kristal | Yeşil ton, ateşböceğini andıran ışık noktaları |
+| Bataklık | Halkalı söğüt ve parlayan sazlar | Mavi sis, yavaş süzülen parçacıklar |
+| Köz | Rünlü bazalt tacı | Sıcak pus, yükselen kıvılcımlar |
+| Buzul | Buz kapısı ve kristal yapı | Soğuk ışık ve hafif kar |
+| Çöl | Obelisk, palmiye ve vaha ayrıntıları | Altın pus, seyrek toz |
+
+Yaratıklar bölgeye özgü kök zırhı, yüzgeç, lav damarı, buz omuzluğu veya çöl maskesi taşır. Yakındaki canlı yaratıkların omuz/kalçaları yürürken hareket eder; bazı kristaller hafifçe süzülüp döner. Petlerin yüzleri ve türlerine özgü tomurcuk, yüzgeç ucu veya patileri vardır. Lacivert/turkuaz arayüz altın çizgiler, dolgu geçişleri ve durum renkleri kullanır; pet koleksiyonu üç yerel **3B önizleme** gösterir. Pencereler kaydırılabilir; ana kontrol yerleşimi ve 44 px dokunma hedefleri korunur.
+
+Görsel iş yükü sınırlandırılır: yeni simgesel yapılar 282 parça ve 7 ışıktır; istemcide 110 stud içindeki en yakın **12 dünya ışığı**, 160 stud içinde en fazla **24 hareketli yaratık** ve 120 stud içinde **12 kristal parçası** işlenir. Hareket 25 Hz, parçacık alanı tek yayıcı ve en fazla 13 parçacık/sn kullanır. Bunlar FPS garantisi değildir; özellikle düşük donanımlı mobilde sis, Glass/Neon ve çoklu istemci davranışı Studio test planıyla ölçülmelidir. Görsel sürüm v8'dir; kayıt şeması v7'dir.
+
 ## Genişleyen dünya
 
 Harita **3.000 × 2.400 stud** boyutunda; ilk 1.800 × 1.600 haritanın 2,5 katı alan sunar. Zemin Roblox parça boyutu sınırına uygun dokuz parçaya bölünür. Bağlantı yolları ve türbe çevreleri dekorlardan arındırılır. Beş biyomda **20 gezici yaratık ve keşif kamplarında 10 muhafız**, **25 toplama noktası**, **5 kişisel keşif sandığı** ve köyle birlikte **6 seyahat türbesi** vardır.

@@ -76,7 +76,7 @@ function ExplorationHUD.create(gui, parent, map, remotes, make, label, button, c
 	for index, id in ipairs(order) do
 		local definition = Config.ExplorationSites[id]
 		local y = 832 + (index - 1) * 216
-		local card = make("Frame", {Position = UDim2.fromOffset(0, y), Size = UDim2.new(1, -6, 0, 206), BackgroundColor3 = Color3.fromRGB(25, 43, 37), BorderSizePixel = 0}, parent)
+		local card = make("Frame", {Position = UDim2.fromOffset(0, y), Size = UDim2.new(1, -6, 0, 206), BackgroundColor3 = Color3.fromRGB(18, 36, 56), BorderSizePixel = 0}, parent)
 		make("UICorner", {CornerRadius = UDim.new(0, 10)}, card)
 		local name = label(card, "", UDim2.fromOffset(10, 4), UDim2.new(1, -20, 0, 24), 14, colors.gold)
 		local detail = label(card, "", UDim2.fromOffset(10, 32), UDim2.new(1, -20, 0, 68), 12)
@@ -128,7 +128,7 @@ function ExplorationHUD.create(gui, parent, map, remotes, make, label, button, c
 				local enabled = not claimed and near and (not known or clear)
 				card.action.Text = claimed and "ÖDÜL ALINDI" or (not near and (known and "SANDIĞA YAKLAŞ" or "KEŞİF NOKTASINA YAKLAŞ") or (not known and "KEŞFET" or (clear and "SANDIĞI AÇ" or "MUHAFIZLARI YEN")))
 				card.action.Selectable, card.action.AutoButtonColor = enabled, enabled
-				card.action.BackgroundColor3 = enabled and Color3.fromRGB(46, 85, 69) or Color3.fromRGB(38, 47, 47)
+				card.action.BackgroundColor3 = enabled and Color3.fromRGB(31, 75, 91) or Color3.fromRGB(24, 35, 51)
 			end
 			progress.Text = string.format("Keşfedilen %d / %d • Açılan sandık %d / %d", knownCount, #order, claimedCount, #order)
 			task.wait(0.25)
