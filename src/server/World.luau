@@ -279,6 +279,45 @@ local function travelShrines(parent)
 	return result
 end
 
+local function regionalContractBoards(parent)
+	local folder = Instance.new("Folder")
+	folder.Name = "RegionalContractBoards"
+	folder.Parent = parent
+	local result = {}
+	for id, region in Config.Regions do
+		local coordinates = Config.Waypoints[id].Position
+		local position = Vector3.new(coordinates.x + 18, 2.8, coordinates.z + 10)
+		local model = Instance.new("Model")
+		model.Name = "ContractBoard_" .. id
+		model:SetAttribute("RegionalContractId", id)
+		model:SetAttribute("ContractPosition", position)
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		model.Parent = folder
+		for _, side in {-1, 1} do
+			part(model, "BoardPost", Vector3.new(0.7, 6.5, 0.7), position + Vector3.new(side * 3.4, 0.45, 0), palette.wood, Enum.Material.Wood)
+		end
+		local board = part(model, "NoticeBoard", Vector3.new(8, 4.8, 0.7), position + Vector3.new(0, 1.2, 0), palette.wood, Enum.Material.Wood)
+		part(model, "ContractParchment", Vector3.new(6.6, 3.5, 0.1), position + Vector3.new(0, 1.2, 0.42), Color3.fromRGB(230, 213, 167))
+		local seal = part(model, "RegionalSeal", Vector3.new(0.8, 0.8, 0.15), position + Vector3.new(2.2, 0.2, 0.53), regionColors[id].accent, Enum.Material.Neon)
+		seal.Shape = Enum.PartType.Ball
+		seal.CanCollide, seal.CanTouch, seal.CanQuery = false, false, false
+		label(board, region.Name .. " · BÖLGE İŞLERİ", "5 yaratık · 3 toplama · Türbeyi keşfet\nGörevi al / ödülü teslim al: E", 340).MaxDistance = 75
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "RegionalContractPrompt"
+		prompt.ObjectText = region.Name .. " · Görev Panosu"
+		prompt.ActionText = "Bölge işlerini incele"
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+		prompt.MaxActivationDistance = 12
+		prompt.HoldDuration = 0.35
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = board
+		model.PrimaryPart = board
+		result[id] = {id = id, prompt = prompt, position = position}
+	end
+	return result
+end
+
 local function path(parent, from, to, width)
 	from = Vector3.new(from.X, 0.4, from.Z)
 	to = Vector3.new(to.X, 0.4, to.Z)
@@ -376,7 +415,7 @@ local function resourceNodes(parent)
 			prompt.HoldDuration = 1.2
 			prompt.Parent = base
 			node.PrimaryPart = base
-			table.insert(result, {id = definition.regionId .. "_" .. index, kind = definition.kind, amount = 1, prompt = prompt, position = base.Position})
+			table.insert(result, {id = definition.regionId .. "_" .. index, regionId = definition.regionId, kind = definition.kind, amount = 1, prompt = prompt, position = base.Position})
 		end
 	end
 	return result
@@ -472,6 +511,7 @@ function World.build()
 			for _, waypoint in Config.Waypoints do
 				local point = waypoint.Position
 				if Vector2.new(x - point.x, z - point.z).Magnitude < 24 then blocked = true end
+				if Vector2.new(x - point.x - 18, z - point.z - 10).Magnitude < 12 then blocked = true end
 			end
 			-- Wide approach lanes stay clear for simple Humanoid steering.
 			if math.abs(x - region.X) < 28 or math.abs(z - region.Z) < 23 then blocked = true end
@@ -509,6 +549,7 @@ function World.build()
 	eliteSanctums(folder)
 	local nodes = resourceNodes(folder)
 	local waypoints = travelShrines(folder)
+	local contractBoards = regionalContractBoards(folder)
 	local enemySpawns = {}
 	for id, region in Config.Regions do
 		for _, offset in {Vector3.new(-58, 0, 42), Vector3.new(52, 0, 37), Vector3.new(-74, 0, -27), Vector3.new(72, 0, -32)} do
@@ -537,6 +578,7 @@ function World.build()
 		ForgePrompt = forgePrompt,
 		ResourceNodes = nodes,
 		Waypoints = waypoints,
+		ContractBoards = contractBoards,
 		EnemySpawns = enemySpawns,
 		EnemyFolder = enemies,
 		SafeZoneCenter = Vector3.zero,
@@ -599,6 +641,11 @@ function World.createEnemy(folder, position, index, regionId)
 	local model = Instance.new("Model")
 	local region = Config.Regions[regionId or "forest"] or Config.Regions.forest
 	model.Name = region.EnemyName .. " " .. tostring(index)
+	model:SetAttribute("AetheriaEnemy", true)
+	model:SetAttribute("EnemyKind", "normal")
+	model:SetAttribute("RegionId", regionId or "forest")
+	local behavior = Config.EnemyBehaviors[regionId or "forest"]
+	model:SetAttribute("EnemyBehavior", behavior and behavior.Kind or "melee")
 	local base = position + Vector3.new(0, 3, 0)
 	local colors = regionColors[regionId or "forest"] or regionColors.forest
 	local skin = colors.skin
@@ -653,6 +700,8 @@ end
 function World.createBoss(folder, definition)
 	local model = World.createEnemy(folder, Vector3.new(definition.X, 0.5, definition.Z), definition.Name, definition.RegionId)
 	model.Name = definition.Name
+	model:SetAttribute("EnemyKind", "boss")
+	model:SetAttribute("EnemyBehavior", "boss")
 	model.Humanoid.DisplayName = "WORLD BOSS · " .. definition.Name
 	model.Humanoid.HealthDisplayDistance = 180
 	model.Humanoid.NameDisplayDistance = 180
@@ -693,6 +742,8 @@ end
 function World.createElite(folder, definition)
 	local model = World.createEnemy(folder, Vector3.new(definition.X, 0.5, definition.Z), definition.Name, definition.RegionId)
 	model.Name = definition.Name
+	model:SetAttribute("EnemyKind", "elite")
+	model:SetAttribute("EnemyBehavior", "elite")
 	model.Humanoid.DisplayName = "ELİT · " .. definition.Name
 	model.Humanoid.HealthDisplayDistance = 130
 	model.Humanoid.NameDisplayDistance = 130
@@ -732,6 +783,20 @@ function World.createEliteTelegraph(position, _direction, definition)
 	local notice = label(warning, attack .. " · ALANDAN ÇIK!", string.format("%.1f sn sonra saldırı", definition.Windup), 300)
 	notice.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 	Debris:AddItem(warning, definition.Windup)
+	return warning
+end
+
+function World.createEnemyTelegraph(position, definition, regionId)
+	local colors = regionColors[regionId]
+	local color = colors and colors.accent or Color3.fromRGB(255, 192, 96)
+	local warning = disc(workspace.AetheriaWorld, "EnemyAttackWarning", Vector3.new(position.X, 0.58, position.Z), definition.Radius, color, Enum.Material.Neon)
+	warning.Transparency = 0.4
+	warning.CanCollide, warning.CanTouch, warning.CanQuery = false, false, false
+	local action = if definition.Kind == "ranged" or definition.Kind == "targeted" then "UZAK SALDIRI" elseif definition.Kind == "slam" or definition.Kind == "area" then "YER SARSINTISI" else "DARBE HAZIRLIĞI"
+	local notice = label(warning, action, "İşaretli alandan çık", 220)
+	notice.StudsOffsetWorldSpace = Vector3.new(0, 2.5, 0)
+	notice.MaxDistance = 70
+	Debris:AddItem(warning, math.max(0.1, definition.Windup))
 	return warning
 end
 

@@ -1,5 +1,19 @@
 -- Pure shared data: no Roblox globals. Loot decisions remain on the server.
 return table.freeze({
+	RegionalContracts = {
+		forest = {Name = "Ormanın Emaneti", KillTarget = 5, GatherTarget = 3, WaypointId = "forest", XP = 75, Gold = 30, Material = "wood", MaterialAmount = 3},
+		marsh = {Name = "Sisin Ardında", KillTarget = 5, GatherTarget = 3, WaypointId = "marsh", XP = 125, Gold = 45, Material = "iron", MaterialAmount = 3},
+		volcanic = {Name = "Közün İzleri", KillTarget = 5, GatherTarget = 3, WaypointId = "volcanic", XP = 200, Gold = 60, Material = "ember", MaterialAmount = 3},
+		frost = {Name = "Buzul Nöbeti", KillTarget = 5, GatherTarget = 3, WaypointId = "frost", XP = 300, Gold = 80, Material = "iron", MaterialAmount = 3},
+		desert = {Name = "Vahanın Çağrısı", KillTarget = 5, GatherTarget = 3, WaypointId = "desert", XP = 400, Gold = 100, Material = "ember", MaterialAmount = 3},
+	},
+	EnemyBehaviors = {
+		forest = {Kind = "melee", Windup = 0, Radius = 5, Range = 5, Cooldown = 1.4, Damage = 10, AggroRange = 65, Leash = 100, MaxVertical = 10},
+		marsh = {Kind = "targeted", Windup = 1, Radius = 6, Range = 32, Cooldown = 3.5, Damage = 14, AggroRange = 65, Leash = 100, MaxVertical = 10},
+		volcanic = {Kind = "area", Windup = 1.2, Radius = 9, Range = 9, Cooldown = 4, Damage = 18, AggroRange = 65, Leash = 100, MaxVertical = 10},
+		frost = {Kind = "melee", Windup = 0.65, Radius = 5, Range = 5, Cooldown = 1.8, Damage = 22, AggroRange = 65, Leash = 100, MaxVertical = 10},
+		desert = {Kind = "targeted", Windup = 0.9, Radius = 7, Range = 30, Cooldown = 3, Damage = 26, AggroRange = 65, Leash = 100, MaxVertical = 10},
+	},
 	PetProgression = {MaxLevel = 10, BaseXP = 40, StepXP = 20, NormalXP = 4, EliteXP = 12, BossXP = 30, DamageEveryLevels = 2,
 		MaxXP = 1080, BonusThresholds = {100, 280, 540, 880}},
 	EliteEligibility = {MinHits = 2, DamageFraction = 0.01},

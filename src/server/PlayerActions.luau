@@ -61,15 +61,24 @@ function Actions:validTarget(player, origin, model, range)
 	if hit and not hit.Instance:IsDescendantOf(model) then return nil end
 	return root
 end
-function Actions:targets(player, root, range, limit)
+function Actions:targets(player, root, range, limit, preferred)
 	local candidates = {}
+	local preferredRoot
+	if preferred ~= nil then
+		if typeof(preferred) ~= "Instance" or not preferred:IsA("Model") then return {} end
+		if not (self.callbacks.enemies[preferred] or self.callbacks.bosses.targets[preferred] or self.callbacks.elites.targets[preferred]) then return {} end
+		preferredRoot = self:validTarget(player, root.Position, preferred, range)
+		if not preferredRoot then return {} end
+	end
 	for _, collection in {self.callbacks.enemies, self.callbacks.bosses.targets, self.callbacks.elites.targets} do
 		for model in collection do
+			if model == preferred then continue end
 			local target = self:validTarget(player, root.Position, model, range)
 			if target then table.insert(candidates, {model = model, root = target, distance = (target.Position - root.Position).Magnitude}) end
 		end
 	end
 	table.sort(candidates, function(a, b) return a.distance < b.distance end)
+	if preferredRoot then table.insert(candidates, 1, {model = preferred, root = preferredRoot, distance = 0}) end
 	while #candidates > limit do table.remove(candidates) end
 	return candidates
 end
@@ -103,7 +112,7 @@ function Actions:damage(player, targets, damage)
 	if #hits > 0 then self:runtime(player).lastCombat = now() end
 	return hits
 end
-function Actions:basic(player)
+function Actions:basic(player, preferred)
 	if not self:gate(player, "basic") then return end
 	local root = self.callbacks.living(player)
 	if not root or not self.callbacks.trusted(player, root) or self.callbacks.safe(root.Position) then return end
@@ -111,21 +120,22 @@ function Actions:basic(player)
 	local time = now()
 	if time < (runtime.basicAt or 0) then return end
 	local stats = Combat.stats(self.callbacks.profiles[player].data, Config)
-	local targets = self:targets(player, root, stats.basicRange, 1)
+	local targets = self:targets(player, root, stats.basicRange, 1, preferred)
 	if #targets == 0 then return end
 	runtime.basicAt = time + Config.AttackCooldown
 	self:damage(player, targets, stats.basicDamage)
 	self.callbacks.effect({userId = player.UserId, abilityId = "basic", classId = stats.classId, kind = if stats.classId == "mage" then "projectile" else "basic", origin = root.Position, target = targets[1].root.Position, damage = stats.basicDamage})
 end
-function Actions:ability(player, slot)
+function Actions:ability(player, slot, preferred)
 	if (slot ~= "primary" and slot ~= "secondary") or not self:gate(player, "ability") then return end
+	if preferred ~= nil and (typeof(preferred) ~= "Instance" or not preferred:IsA("Model")) then return end
 	local root, humanoid = self.callbacks.living(player)
 	if not root or not self.callbacks.trusted(player, root) then return end
 	local profile = self.callbacks.profiles[player].data
 	local definition = Config.Abilities[profile.classId][slot]
 	local healing = definition.Kind == "heal"
 	if not healing and self.callbacks.safe(root.Position) then return end
-	local targets = if healing then {} else self:targets(player, root, definition.Range or definition.Radius, if definition.Kind == "area" then 3 else 1)
+	local targets = if healing then {} else self:targets(player, root, definition.Range or definition.Radius, if definition.Kind == "area" then 3 else 1, preferred)
 	local valid = if healing then humanoid.Health < humanoid.MaxHealth else #targets > 0
 	local runtime = self:runtime(player)
 	local result = Combat.use(profile, runtime, slot, now(), valid, Config)
@@ -196,6 +206,7 @@ function Actions:connectGathering()
 			if profile.materials[node.kind] == nil then return end
 			cooldowns[node.id] = now() + 30
 			profile.materials[node.kind] = math.min(100000000, profile.materials[node.kind] + node.amount)
+			if self.callbacks.gathered then self.callbacks.gathered(player, node.regionId or node.id:match("^(%a+)_")) end
 			self.callbacks.state(player)
 		end)
 	end

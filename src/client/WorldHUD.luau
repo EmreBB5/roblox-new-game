@@ -199,6 +199,11 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		elseif input.KeyCode == Enum.KeyCode.G or input.KeyCode == Enum.KeyCode.DPadLeft then show("party") end
 	end)
 	remotes:WaitForChild("OpenTravel").OnClientEvent:Connect(function() show("map", true) end)
+	remotes:WaitForChild("OpenJournal").OnClientEvent:Connect(function(regionId)
+		if type(regionId) ~= "string" or not Config.RegionalContracts[regionId] then return end
+		show("character", true)
+		task.defer(function() characterHUD:focusContract(regionId) end)
+	end)
 	remotes:WaitForChild("WorldState").OnClientEvent:Connect(function(world) if type(world) == "table" then self.world = world end end)
 	local function timeText(seconds)
 		seconds = math.max(0, math.floor(seconds))

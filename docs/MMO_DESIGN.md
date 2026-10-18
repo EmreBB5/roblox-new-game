@@ -84,3 +84,14 @@ Elit ödülleri iki kabul edilmiş isabet ve %1 hasar veren, canlı ve ölüm no
 Ölüm, geri çekilme, yeni karşılaşma ve kapanış saldırı neslini geçersiz kılar. Her gecikmiş saldırı karşılaşma kimliği/nesil/tek kullanım kontrolünden geçer. Yeniden doğuş 90 saniyedir. Birlikte testte bu servis akışı taklit ortamında denetlenebilir; Roblox fizik ve streaming sonucu olarak sunulmaz. Studio kontrol planı bu ayrımı korur.
 
 Sunucunun kabul ettiği gerçek can azalması ve iyileştirme, eylemi yapan oyuncuya kısa süreli sayılarla gösterilir. Bu sayılar hasar isteği üretmez. Örneğin 2 canı kalmış hedefe 40 hasarlık vuruş 2 olarak görünür. Derleme sonrasında XML'deki tüm kaynaklar ve Script/LocalScript/ModuleScript türleri dosyalarla karşılaştırılır; eksik veya eski kaynak içeren çıktı hata verir.
+
+
+## Bölge görevleri, normal yaratık AI ve hedef tercihi
+
+Beş yerel görev, doğrusal sefer günlüğünden bağımsız ilerler. Türbe yanındaki panoda kabul edilen görev beş bölge öldürmesi, üç başarılı toplama ve ilgili türbe keşfi ister. İlk iki sayaç kabulden önce artmaz; keşif kalıcı olduğu için daha önce açılmış türbe geçerlidir. Native prompt ve panel istekleri aynı 14 stud, canlılık, güvenilir konum ve istek sıklığı kontrollerini kullanır. Ödül panoda bir kez alınır. Kayıt şeması v6, önceki pet eğitimini ve bütün diğer ilerlemeyi koruyarak beş bağımsız görev kaydını ekler.
+
+Normal yaratıkların yaşam döngüsü Main'den EnemyService'e ayrıldı. Orman doğrudan yakın dövüşü korur; bataklık ve çöl, hedefin sabit ilk konumunda menzilli alan hazırlar. Köz kendi çevresini işaretler, buzul kısa hazırlıklı yakın darbe kullanır. Hazırlık, görüş hattı, güvenli alan ve son konum doğrulanır. Geri çekilme canı ve son saldıranı sıfırlar; eski saldırı nesli ve karşılaşma kimliği yeniden kullanılamaz. Normal grup, pet ve sefer ödülleri aynı teslim akışında korunur.
+
+Hedef tercihi istemci rahatlığıdır. Tab/R3/HEDEF görülebilen canlı yaratıkları sıralar; gerçek saldırı sunucuda kayıt üyeliği, can, menzil ve görüş hattı ile doğrulanır. Geçersiz açık hedef başka yaratığa dönüştürülmez. Hedef seçilmemişse eski en yakın hedef davranışı sürer. Alan yeteneği geçerli seçili hedefi ilk sıraya alır ve diğer en yakın iki hedefi ekler. İstemci hedef seçimi hasar veya ödül yetkisi vermez.
+
+Altı saf mantık paketine ek olarak gerçek dört servis/modül kaynağı, sınırlı taklit ortamında çalıştırılır. Özellikle görev panosunun uzaktan kullanılamaması, aynı görevin tekrar ödül vermemesi, canı sıfır ama ölüm olayı bekleyen yaratığın saldırmaması ve geçersiz seçili hedefte otomatik başka düşmana geçilmemesi test edilir. Bu doğrulama gerçek Studio fizik, ağ, UI hit testi ve DataStore sonucu olarak sunulmaz.

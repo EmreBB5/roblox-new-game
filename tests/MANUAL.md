@@ -74,3 +74,14 @@ Bu senaryolar henüz gerçek Studio test sonucu değildir.
 8. Harita açıkken bir elitin saldırı hazırlığına girmesini izle. 1,2/1,5 saniyelik uyarı, 3 saniyelik olağan güncellemeyi beklemeden görünmeli. Elit ölünce ya da geri çekilince eski uyarı kapanmalı; canı sıfır olmuş fakat Died olayı henüz işlenmemiş elitin gecikmiş saldırısı hasar vermemeli.
 
 Bu yeni senaryoların gerçek Studio ve yayınlanmış özel test uygulaması ayrıca yapılmalıdır.
+
+## Bölgesel sözleşmeler, yaratık davranışları ve hedef seçimi
+
+1. Beş bölgenin görev panosunda sözleşmeyi al. Kabul öncesindeki yaratık öldürme ve toplama sayılmamalı; daha önce keşfedilmiş ilgili türbe geçerli olmalı. Kabul sonrasında 5 bölge yaratığı ve 3 başarılı kaynak toplama etkileşimi gerekli. Başka bölgedeki ilerleme bu sözleşmeye yazılmamalı.
+2. Panodan 14 stud'dan uzakta, ölüyken veya güvenilmez konumda kabul/teslim isteği reddedilmeli. Hazır sözleşme panoda tek ödül vermeli; hızlı çift tıklama, tekrar giriş ve tekrar teslim ikinci ödül vermemeli. Sözleşme pet XP'si vermemeli. Tüm eski kayıt alanları yeni şema yüklemesinden sonra korunmalı.
+3. Orman düşmanı yakın menzilde doğrudan saldırmalı. Bataklık ve çöl yaratıkları oyuncunun hazırlık başındaki konumuna sabit işaret bırakmalı; işaret hareket eden oyuncuyu izlememeli. Köz yaratığı kendi konumunda patlama, buzul yaratığı kısa hazırlıklı yakın saldırı yapmalı. İşaretten çıkmak ve duvar arkasına geçmek saldırıyı önlemeli.
+4. Yaratığı hazırlık sırasında öldür, başlangıcından 100 stud dışına çek veya yeni karşılaşmayla değiştir. Eski saldırı hasar vermemeli. Geri dönüşte can ve son saldıran bilgisi sıfırlanmalı; eski oyuncuya sonradan ödül yazılmamalı. Normal düşman tek kopya olarak 8 saniye sonra yeniden doğmalı.
+5. Tab, gamepad R3 ve mobil hedef düğmesiyle yakındaki görünür hedefler arasında geç. Seçili hedefin adı, türü, canı ve uzaklığı güncellenmeli. Ölüm, duvar, mesafe veya streaming nedeniyle kaybolan hedef temizlenmeli. Hedef seçmek saldırının sunucu menzilini artırmamalı; sahte oyuncu/NPC/model hedefi hasar almamalı.
+6. Küçük yatay/dikey ekranlarda hedef paneli, görev listesi ve yetenek düğmeleri üst üste binmemeli. Günlükte hedefler açık görünmeli; teslim için ilgili panoya dönülmesi gerektiği anlaşılmalı.
+
+Saf kurallar ve taklit ortamındaki servis akışları otomatik test edilmiştir; bu liste gerçek Studio oynanış uygulamasının yerini tutmaz.

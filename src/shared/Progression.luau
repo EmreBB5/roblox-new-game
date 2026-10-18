@@ -14,7 +14,11 @@ function Progression.addXP(level: number, xp: number, amount: number): (number, 
 end
 
 function Progression.newProfile()
-	return {version = 5, level = 1, xp = 0, gold = 0, kills = 0,
+	local regionalContracts = {}
+	for _, id in {"forest", "marsh", "volcanic", "frost", "desert"} do
+		regionalContracts[id] = {status = "available", kills = 0, gathers = 0}
+	end
+	return {regionalContracts = regionalContracts,version = 6, level = 1, xp = 0, gold = 0, kills = 0,
 		questStatus = "available", questKills = 0, hasCrystal = false,
 		pets = {}, petXP = {}, equippedPet = nil, petPity = {}, bossVictories = {}, lastBossClaims = {}, stardust = 0, classId = "warrior", equipmentTier = 0,
 		waypoints = {village = true}, materials = {wood = 0, iron = 0, ember = 0}, expedition = {stage = 1, progress = 0}}
@@ -55,6 +59,12 @@ function Progression.sanitize(raw: any)
 	end
 	for _, id in {"forest", "marsh", "volcanic", "frost", "desert"} do
 		if type(raw.waypoints) == "table" and raw.waypoints[id] == true then profile.waypoints[id] = true end
+	end
+	for _, id in {"forest", "marsh", "volcanic", "frost", "desert"} do
+		local entry = if type(raw.regionalContracts) == "table" then raw.regionalContracts[id] else nil
+		if type(entry) == "table" and (entry.status == "active" or entry.status == "completed") then
+			profile.regionalContracts[id] = {status = entry.status, kills = bounded(entry.kills, 5), gathers = bounded(entry.gathers, 3)}
+		end
 	end
 	if raw.classId == "mage" then profile.classId = "mage" end
 	profile.equipmentTier = bounded(raw.equipmentTier, 3)

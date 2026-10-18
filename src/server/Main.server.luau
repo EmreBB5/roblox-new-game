@@ -14,12 +14,14 @@ local TravelService = require(script.Parent.TravelService)
 local PartyRules = require(ReplicatedStorage.Shared.PartyRules)
 local PetGrowth = require(ReplicatedStorage.Shared.PetGrowth)
 local EliteService = require(script.Parent.EliteService)
+local EnemyService = require(script.Parent.EnemyService)
+local RegionalContractService = require(script.Parent.RegionalContractService)
 local world = World.build()
 local remoteFolder = Instance.new("Folder")
 remoteFolder.Name = "AetheriaRemotes"
 remoteFolder.Parent = ReplicatedStorage
 local remotes = {}
-for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "CombatHit", "PartyAction", "PartyState", "TravelRequest", "OpenTravel"} do
+for _, name in {"Attack", "State", "RequestState", "Notify", "WorldState", "EquipPet", "SelectClass", "UseAbility", "CraftUpgrade", "ClaimExpedition", "CombatEffect", "CombatHit", "PartyAction", "PartyState", "TravelRequest", "OpenTravel", "RequestRegionContract", "OpenJournal"} do
 	local event = Instance.new("RemoteEvent")
 	event.Name = name
 	event.Parent = remoteFolder
@@ -38,6 +40,8 @@ local actions
 local partyService
 local travelService
 local eliteService
+local enemyService
+local contractService
 
 local function state(player)
 	local handle = profiles[player]
@@ -50,6 +54,8 @@ local function state(player)
 	local equippedInfo = petStats[p.equippedPet]
 	local petLevel = if equippedInfo then equippedInfo.level else 0
 	if player:GetAttribute("PetLevel") ~= petLevel then player:SetAttribute("PetLevel", petLevel) end
+	local regionalContracts, regionContractReady = {}, {}
+	if contractService then regionalContracts, regionContractReady = contractService:snapshot(player) end
 	local resource, cooldowns = 100, {}
 	if actions then resource, cooldowns = actions:snapshot(player) end
 	remotes.State:FireClient(player, {
@@ -62,6 +68,7 @@ local function state(player)
 		petXP = table.clone(p.petXP), petStats = petStats,
 		pets = table.clone(p.pets), equippedPet = p.equippedPet or "",
 		petPity = table.clone(p.petPity), bossVictories = table.clone(p.bossVictories), stardust = p.stardust,
+		regionalContracts = regionalContracts, regionContractReady = regionContractReady,
 		waypoints = table.clone(p.waypoints), travel = if travelService then travelService:snapshot(player) else nil,
 	})
 end
@@ -138,6 +145,36 @@ remotes.RequestState.OnServerEvent:Connect(function(player, ...)
 	if partyService then remotes.PartyState:FireClient(player, partyService:snapshot(player)) end
 end)
 
+contractService = RegionalContractService.new(world, {
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition,
+	state = state, save = savePlayer,
+	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
+	open = function(player, regionId) remotes.OpenJournal:FireClient(player, regionId) end,
+})
+contractService:connect()
+enemyService = EnemyService.new(world, {
+	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
+	reward = function(player, regionId, position)
+		local region = Config.Regions[regionId]
+		local recipients = {player}
+		if partyService then
+			for _, member in partyService:assists(player, position) do table.insert(recipients, member) end
+		end
+		for _, recipient in recipients do
+			local handle = profiles[recipient]
+			if not handle then continue end
+			local profile = handle.data
+			local wasReady = profile.questStatus == "return"
+			local xp = PartyRules.rewardXP(Config.KillXP * region.EnemyLevel, recipient ~= player, Config)
+			Progression.recordRegionKill(profile, regionId, xp, Config)
+			Campaign.recordKill(profile, regionId, Config)
+			contractService:recordKill(recipient, regionId)
+			awardPet(recipient, Config.PetProgression.NormalXP)
+			state(recipient)
+			if not wasReady and profile.questStatus == "return" then remotes.Notify:FireClient(recipient, "Hedef tamamlandı! Köydeki bilgeye dön.") end
+		end
+	end,
+}, enemies)
 eliteService = EliteService.new(world, {
 	changed = function() remotes.WorldState:FireAllClients(worldSnapshot()) end,
 	profiles = profiles, living = livingCharacter, trusted = trustedPosition, safe = isSafe,
@@ -147,6 +184,7 @@ eliteService = EliteService.new(world, {
 		local xp = PartyRules.rewardXP(definition.XP, not personal, Config)
 		Progression.recordRegionKill(profile, definition.RegionId, xp, Config)
 		Campaign.recordKill(profile, definition.RegionId, Config)
+		contractService:recordKill(player, definition.RegionId)
 		if personal then
 			profile.gold = math.min(999999999, profile.gold + definition.Gold)
 			local material = Config.Regions[definition.RegionId].Material
@@ -162,6 +200,7 @@ actions = PlayerActions.new(world, {
 	profiles = profiles, enemies = enemies, bosses = bossService, elites = eliteService,
 	living = livingCharacter, trusted = trustedPosition, safe = isSafe,
 	state = state, save = savePlayer,
+	gathered = function(player, regionId) contractService:recordGather(player, regionId) end,
 	notify = function(player, message) remotes.Notify:FireClient(player, message) end,
 	effect = function(payload) remotes.CombatEffect:FireAllClients(payload) end,
 	hit = function(player, payload)
@@ -194,11 +233,14 @@ end)
 remotes.TravelRequest.OnServerEvent:Connect(function(player, id, ...)
 	if select("#", ...) == 0 then travelService:request(player, id) end
 end)
-remotes.Attack.OnServerEvent:Connect(function(player, ...)
-	if select("#", ...) == 0 then actions:basic(player) end
+remotes.RequestRegionContract.OnServerEvent:Connect(function(player, action, regionId, ...)
+	if select("#", ...) == 0 and (action == "accept" or action == "claim") then contractService:request(player, action, regionId) end
 end)
-remotes.UseAbility.OnServerEvent:Connect(function(player, slot, ...)
-	if select("#", ...) == 0 and type(slot) == "string" then actions:ability(player, slot) end
+remotes.Attack.OnServerEvent:Connect(function(player, preferred, ...)
+	if select("#", ...) == 0 then actions:basic(player, preferred) end
+end)
+remotes.UseAbility.OnServerEvent:Connect(function(player, slot, preferred, ...)
+	if select("#", ...) == 0 and type(slot) == "string" then actions:ability(player, slot, preferred) end
 end)
 remotes.SelectClass.OnServerEvent:Connect(function(player, classId, ...)
 	if select("#", ...) == 0 then actions:selectClass(player, classId) end
@@ -225,43 +267,6 @@ world.QuestPrompt.Triggered:Connect(function(player)
 	state(player)
 end)
 
-local function spawnEnemy(position, index, regionId)
-	if closing then return end
-	local model = World.createEnemy(world.EnemyFolder, position, index, regionId)
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	local root = model:FindFirstChild("HumanoidRootPart")
-	if not humanoid or not root then model:Destroy() return end
-	local region = Config.Regions[regionId] or Config.Regions.forest
-	humanoid.MaxHealth = region.EnemyHealth
-	humanoid.Health = region.EnemyHealth
-	humanoid.WalkSpeed = Config.EnemyWalkSpeed
-	root:SetNetworkOwner(nil)
-	local info = {spawn = position, lastAttack = 0, lastAttacker = nil, damage = region.EnemyDamage}
-	enemies[model] = info
-	humanoid.Died:Connect(function()
-		enemies[model] = nil
-		local player = info.lastAttacker
-		if player and profiles[player] then
-			local recipients = {player}
-			for _, member in partyService:assists(player, root.Position) do table.insert(recipients, member) end
-			for _, recipient in recipients do
-				local profile = profiles[recipient].data
-				local wasReady = profile.questStatus == "return"
-				local xp = PartyRules.rewardXP(Config.KillXP * region.EnemyLevel, recipient ~= player, Config)
-				Progression.recordRegionKill(profile, regionId, xp, Config)
-				Campaign.recordKill(profile, regionId, Config)
-				awardPet(recipient, Config.PetProgression.NormalXP)
-				state(recipient)
-				if not wasReady and profile.questStatus == "return" then
-					remotes.Notify:FireClient(recipient, "Hedef tamamlandı! Köydeki bilgeye dön.")
-				end
-			end
-		end
-		task.delay(3, function() model:Destroy() end)
-		task.delay(Config.EnemyRespawnSeconds, function() spawnEnemy(position, index, regionId) end)
-	end)
-end
-for index, entry in world.EnemySpawns do spawnEnemy(entry.position, index, entry.regionId) end
 
 task.spawn(function()
 	while not closing do
@@ -289,35 +294,7 @@ task.spawn(function()
 		end
 		partyService:update()
 		travelService:update()
-		for model, info in enemies do
-			local root = model:FindFirstChild("HumanoidRootPart")
-			local humanoid = model:FindFirstChildOfClass("Humanoid")
-			if not root or not humanoid or humanoid.Health <= 0 then continue end
-			local targetRoot, targetHumanoid = nil, nil
-			local distance = Config.EnemyAggroRange
-			if (root.Position - info.spawn).Magnitude < Config.EnemyAggroRange * 1.5 then
-				for _, player in Players:GetPlayers() do
-					local candidate, candidateHumanoid = livingCharacter(player)
-					if candidate and profiles[player] and not isSafe(candidate.Position) and trustedPosition(player, candidate) then
-						local candidateDistance = (candidate.Position - root.Position).Magnitude
-						if candidateDistance < distance then targetRoot, targetHumanoid, distance = candidate, candidateHumanoid, candidateDistance end
-					end
-				end
-			end
-			if targetRoot then
-				humanoid:MoveTo(targetRoot.Position)
-				if distance <= Config.EnemyAttackRange and now - info.lastAttack >= Config.EnemyAttackCooldown then
-					info.lastAttack = now
-					local params = RaycastParams.new()
-					params.FilterType = Enum.RaycastFilterType.Exclude
-					params.FilterDescendantsInstances = {model}
-					local hit = workspace:Raycast(root.Position, targetRoot.Position - root.Position, params)
-					if not hit or hit.Instance:IsDescendantOf(targetRoot.Parent) then
-						targetHumanoid:TakeDamage(info.damage)
-					end
-				end
-			else humanoid:MoveTo(info.spawn) end
-		end
+		enemyService:update()
 	end
 end)
 
@@ -352,6 +329,7 @@ Players.PlayerRemoving:Connect(function(player)
 	actions:remove(player)
 	travelService:remove(player)
 	partyService:remove(player)
+	contractService:remove(player)
 	movement[player], lastAttack[player], lastRequest[player], lastPrompt[player] = nil, nil, nil, nil
 	ProfileStore.save(player, true)
 end)
@@ -377,6 +355,7 @@ game:BindToClose(function()
 	closing = true
 	bossService:close()
 	eliteService:close()
+	enemyService:close()
 	local pending = 0
 	for player in profiles do
 		pending += 1

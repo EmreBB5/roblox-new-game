@@ -67,6 +67,8 @@ local toast = panel(UDim2.fromOffset(350, 65), UDim2.new(0.5, 0, 0, 12), Vector2
 toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
 local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
+local targetHUD = require(script.Parent:WaitForChild("TargetHUD"))
+targetHUD.start(gui, create, label, colors, function() return worldHUD.open end)
 require(script.Parent:WaitForChild("PetVisuals")).start()
 require(script.Parent:WaitForChild("CombatEffects")).start(remotes:WaitForChild("CombatEffect"))
 require(script.Parent:WaitForChild("CombatText")).start(remotes:WaitForChild("CombatHit"))
@@ -136,7 +138,8 @@ local function attack()
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 or os.clock() - lastAttack < 0.2 then return end
 	lastAttack = os.clock()
-	attackRemote:FireServer()
+	local preferred = targetHUD.getTarget()
+	if preferred then attackRemote:FireServer(preferred) else attackRemote:FireServer() end
 	attackButton.BackgroundColor3 = colors.gold
 	TweenService:Create(attackButton, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(78, 99, 59) }):Play()
 end
@@ -180,6 +183,7 @@ stateRemote.OnClientEvent:Connect(function(state)
 	xpFill.Size = UDim2.fromScale(math.clamp(xp / needed, 0, 1), 1)
 	goldText.Text = string.format("Altın %d  •  Yıldız tozu %d", state.gold or 0, state.stardust or 0)
 	worldHUD:setState(state)
+	targetHUD.setState(state)
 	if state.questStatus == "active" then
 		questText.Text = string.format("Ormanı koru: %d / %d yaratık yenildi.", state.questKills or 0, state.questTarget or 3)
 	elseif state.questStatus == "return" then
