@@ -1,13 +1,15 @@
 # Studio oyun dosyası
 
-`Aetheria.rbxl`, `48109b30483875a1386c9c9e1aa079c2371903af` kaynak sürümünden Rojo 7.7.1 ile üretilmiş bağımsız Studio dosyasıdır. Doğrudan indirme için depoda tutulur.
+`Aetheria.rbxl`, `f6cfc9da98b4b1ceb5678343286dfcfe060d307b` kaynak sürümünden Rojo 7.7.1 ile üretilmiş bağımsız Studio dosyasıdır. Doğrudan indirme için depoda tutulur.
 
-Bu sürüm beş biyom, 3.000×2.400 stud dünya, dört kişilik grup, altı keşif türbesi, altı sefer aşaması, pet eğitimi, iki elit, beş bağımsız bölge görevi, Tab/R3/HEDEF seçimi ve **beş yeni keşif kampını** içerir. Kamp yolları ve köprüleri, on muhafız, kişisel tek seferlik sandıklar ve M keşif günlüğü eklenmiştir. Alınan sandık yalnız ilgili oyuncuda açık/boş görünür. Profil v7 eski ilerlemeyi korur.
+**v8 görsel yenilemesi:** eğimli çatılar, ahşap kirişler, sıcak pencereler, çiçeklikler, kristal çeşme, pazar tezgâhları, fenerler ve beş biyoma özgü simgesel yapılar. Yaratıklara bölgesel zırh/siluet ayrıntıları ve sınırlı yerel yürüyüş hareketi; petlere yüzler ve tür ayrıntıları eklendi. Arayüz lacivert/turkuaz/altın temasına geçti; pet koleksiyonunda üç yerel 3B önizleme var. Biyoma göre renk/sis ve tek parçacık alanı kullanılır. Yakındaki en fazla 12 dünya ışığı, 24 hareketli yaratık ve 12 kristal parçası yerelde işlenir; gerçek cihaz FPS testi ayrıca gerekir.
 
-Yedi saf Luau paketinde 1.318 ve gerçek servis/modül kaynaklarını kullanan beş sınırlı akış taklidinde 274 doğrulama geçti (toplam **1.592**). Bütün Luau dosyaları derlendi, saf mantık analizi ve **37 kaynak/tür** için XML dışa aktarımı ve yerel Rojo API eşitliği doğrulandı. Sınırlı dünya yapım denetimi 1.108 statik parça, 9 zemin, 30 düşman doğum noktası, 5 kamp ve 50 köprü tahtasını oluşturdu; kritik etkileşim konumları ve parça boyutlarını kontrol etti. Bu kontroller gerçek Studio oynanış/fizik/çoklu istemci/kalıcılık testi değildir; Linux ortamında Studio çalıştırılmamıştır.
+Beş biyom, 3.000×2.400 stud dünya, dört kişilik grup, altı seyahat türbesi, altı sefer aşaması, pet eğitimi, iki elit, beş bölge görevi, Tab/R3/HEDEF seçimi, beş keşif kampı ve kişisel sandıklar bulunur. Kayıt şeması v7 eski ilerlemeyi korur.
 
-Dosya: 97,970 bayt. SHA-256: `b4123cbffa853d4d5c9d62f48ea9ca602e272a22724ab89cec0a892d3b9007bf`.
+Yedi saf Luau paketinde 1.318 ve gerçek servis/modül kaynaklarını kullanan beş sınırlı akış taklidinde 274 doğrulama geçti (toplam **1.592**). Bütün Luau dosyaları derlendi, saf mantık analizi ve **42 kaynak/tür** için XML dışa aktarımı ve yerel Rojo API eşitliği doğrulandı. Sınırlı dünya yapım denetimi **1.576 statik parça**, 9 zemin, 30 düşman doğum noktası, 5 kamp, 6 türbe, 282 landmark parçası ve beş bölge yaratığının kozmetik parçalarını kontrol etti. Bu kontroller gerçek Studio görünüm/fizik/çoklu istemci/kalıcılık/FPS testi değildir; Linux ortamında Studio çalıştırılmamıştır.
 
-Studio'da **Ctrl+O** ile bu dosyayı aç, **F5** ile başlat. Dünya Play sırasında oluşturulur. **M** haritasındaki **?** işaretine yürü, taşta **E** ile keşfet, iki muhafızı yen ve 5 saniye savaş dışında kaldıktan sonra sandıkta **E** tut. Önceki indirdiğin oyun dosyasının ayrı bir kopyasını koru.
+Dosya: 116,803 bayt. SHA-256: `183b97f3550523c596ef8e61187231db6552d3a644583f63cba011c9485a1145`.
+
+Studio'da **Ctrl+O** ile bu dosyayı aç, **F5** ile başlat. Dünya Play sırasında oluşturulur. Yeni köyden açık dünyaya çık; **P** ile pet portrelerini, **M** ile biyom ve kamp haritasını aç. Muhafızları yendikten sonra sandıkları karakter başına bir kez alabilirsin. Önceki indirdiğin oyun dosyasının ayrı bir kopyasını koru.
 
 Yeni bir oyun sürümü yayımlanırken önce `bash scripts/check.sh` çalıştır, ardından `rojo build default.project.json --output build/Aetheria.rbxl` ile üret ve doğrulanmış çıktıyı buradaki dosyaya kopyala. Kurulum veya başlangıç scriptleri bu takip edilen dosyayı otomatik değiştirmez.
