@@ -92,6 +92,9 @@ function Feedback.create(gui, make, label, colors)
 		end
 		heading.TextTruncate, detail.TextTruncate = Enum.TextTruncate.AtEnd, Enum.TextTruncate.AtEnd
 	end
+	function self:isVisible()
+		return not disposed and (current ~= nil or #pending > 0)
+	end
 	function self:setState(state)
 		if disposed then return end
 		local event = Rules.observe(tracker, state)

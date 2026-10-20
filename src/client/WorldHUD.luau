@@ -158,6 +158,13 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		for _, item in ipairs(content:GetDescendants()) do if item:IsA("GuiObject") then item.ZIndex = 7 end end
 	end
 	setZ()
+	function self:attachJourney(journey)
+		if self.journeyHUD == journey then return end
+		self.journeyHUD = journey
+		journey:attachMapPanel(mapPanel)
+		journey:setWorld(self.world)
+		setZ()
+	end
 	function self:setState(state)
 		self.state = state
 		explorationHUD:setState(state)
@@ -233,6 +240,7 @@ function WorldHUD.create(gui, remotes, make, label, colors)
 		if type(world) ~= "table" then return end
 		self.world = world
 		explorationHUD:setWorld(world)
+		if self.journeyHUD then self.journeyHUD:setWorld(world) end
 	end)
 	local function timeText(seconds)
 		seconds = math.max(0, math.floor(seconds))

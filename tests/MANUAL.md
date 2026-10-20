@@ -127,3 +127,16 @@ Ek v8 kontrolleri:
 6. Küçük mobil ekran ve gamepad'de ödül kartının hareket/atlama/yetenek kontrollerini veya hedef canını kapatmadığını kontrol et. Kartlar sohbet/modal açıkken etkileşimi ele geçirmemeli. Kamera sarsıntısı veya istemciden yeni ödül/hasar isteği üretilmemeli.
 
 Saf feedback testleri hesap ve tekrar korumasını sınar. Gerçek çizim, BillboardGui görünümü, efekt zamanlaması ve düşük cihaz performansı Studio/istemciyle ayrıca kontrol edilmelidir.
+
+## v10 yolculuk önerileri ve etkileşim sunumu
+
+1. Yeni profilde Eldrin'e gitme, görev etkin olduğunda ormana gitme ve hedef tamamlandığında Eldrin'e dönme önerilerini izle. Eski görev tamamlanmışsa günlük oyuncuyu sürekli aynı görevi yeniden almaya zorlamamalı. Sefer ve bölge sözleşmesi teslimi hazır olduğunda doğru günlük/pano önerilmeli.
+2. Canlı ve seviyeye uygun dünya bossu önerisini, süresi dolmuş/ölmüş/henüz çıkmamış boss bilgileriyle karşılaştır. Eski State veya WorldState, oyuncuyu ölü ya da süresi dolmuş hedefe göndermemeli. Öneri ödül veya boss katılım koşulunu değiştirmemeli.
+3. Keşfedilmemiş türbe, kamp ve açılmamış kişisel sandık önerilerini dene. Yakınlık sırası ve eşit uzaklıkta sıralama kararlı olmalı; keşif veya sandık tamamlanınca eski öneri listeden kalkmalı. Yanlış/eksik konum bilgisi dünya işareti oluşturmamalı.
+4. Haritadaki önerilerden birini sabitle, tamamla veya geçersiz hale getir. Sabitleme yalnız bu istemcide kalmalı; yeni hedef eski işareti temizlemeli. İşaret sınırı, mesafe gizleme, modal açıkken gizlenme, ölüm/yeniden doğma ve GUI kapanışında temizleme kontrol edilmeli.
+5. Küçük dikey/yatay ekran ve gamepad'de görev kutusunun yeni başlık/açıklama/mesafe satırları kayıt durumunu veya hareket/yetenek düğmelerini kapatmamalı. İsteğe bağlı harita öneri kartları en az 44 px düğme ve kaydırma alanıyla kullanılmalı.
+6. Bölgeye giriş ve etkileşim efektlerini iki oyuncuyla dene. İstemci efektleri yeni ödül/hasar isteği üretmemeli; keşif, toplama, üretim ve sandık ödülleri yalnız sunucu onayından sonra görünmeli. Tekrar etkileşim, profil yükleme veya eski snapshot sahte başarı gösterimi üretmemeli.
+
+Saf öneri testleri karar mantığını ve girdi güvenilirliğini kontrol eder. Gerçek yönlendirme görünümü, render zamanlaması, fizik ve mobil kullanım Studio/istemcide ayrıca doğrulanmalıdır.
+
+Sabitleme regresyonu: Otomatik öneri sayısı altıdan fazla olduğunda daha düşük öncelikli bir hedefi sabitle ve 350 stud dışına yürü. Hedef tamamlanmadıkça sabitleme korunmalı; ölüm/yeniden doğma sırasında kök parçasının geçici yokluğu sabitlemeyi silmemeli. Tamamlanan keşif/sandık veya süresi dolan boss sabitlemesi ise bırakılmalı; altı kart sınırı korunmalı.

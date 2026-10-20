@@ -57,10 +57,6 @@ local xpFill = bar(stats, 116, colors.xp)
 local goldText = label(stats, "Altın 0", UDim2.fromOffset(14, 129), UDim2.new(1, -28, 0, 18), 12, colors.gold)
 
 local quest = panel(UDim2.fromOffset(270, 132), UDim2.fromOffset(12, 177))
-local questHeading = label(quest, "◆  ORMANIN ÇAĞRISI", UDim2.fromOffset(14, 9), UDim2.new(1, -28, 0, 22), 13, colors.gold)
-questHeading.Font = Enum.Font.GothamBold
-local questText = label(quest, "Muhafızı bul ve görevini al.", UDim2.fromOffset(14, 35), UDim2.new(1, -28, 0, 47), 14)
-local crystalText = label(quest, "Kristal • Henüz kazanılmadı", UDim2.fromOffset(14, 86), UDim2.new(1, -28, 0, 20), 12, colors.muted)
 local saveText = label(quest, "", UDim2.fromOffset(14, 109), UDim2.new(1, -28, 0, 18), 10, colors.muted)
 
 local hint = panel(UDim2.fromOffset(350, 48), UDim2.new(0.5, 0, 1, -12), Vector2.new(0.5, 1))
@@ -74,6 +70,12 @@ toast.Visible = false
 local toastText = label(toast, "", UDim2.fromOffset(14, 7), UDim2.new(1, -28, 1, -14), 15)
 local progressionFeedback = require(script.Parent:WaitForChild("ProgressionFeedback")).create(gui, create, label, colors)
 local worldHUD = require(script.Parent:WaitForChild("WorldHUD")).create(gui, remotes, create, label, colors)
+local journeyHUD = require(script.Parent:WaitForChild("JourneyHUD")).create(gui, quest, remotes, create, label, colors, function() return worldHUD.open end)
+worldHUD:attachJourney(journeyHUD)
+local interactionVFX = require(script.Parent:WaitForChild("InteractionVFX")).start(gui, function() return worldHUD.open or GuiService.MenuIsOpen or UserInputService:GetFocusedTextBox() ~= nil end)
+local regionIntro = require(script.Parent:WaitForChild("RegionIntro")).create(gui, create, label, colors, function()
+	return worldHUD.open or GuiService.MenuIsOpen or UserInputService:GetFocusedTextBox() ~= nil or progressionFeedback:isVisible()
+end)
 local targetHUD = require(script.Parent:WaitForChild("TargetHUD"))
 targetHUD.start(gui, create, label, colors, function() return worldHUD.open end)
 require(script.Parent:WaitForChild("PetVisuals")).start()
@@ -114,6 +116,8 @@ local function resize()
 	end
 	worldHUD:resize(viewport)
 	progressionFeedback:resize(viewport)
+	journeyHUD:resize(viewport)
+	regionIntro:resize(viewport)
 end
 local viewportConnection
 local function watchCamera()
@@ -129,13 +133,13 @@ local function updateInputHint()
 	local input = UserInputService:GetLastInputType()
 	if input == Enum.UserInputType.Touch then
 		attackButton.Text = "SALDIR"
-		hintText.Text = "Muhafıza yaklaş • Etkileşim simgesine dokun"
+		hintText.Text = "Haritadan hedef seç • Etkileşim simgesine dokun"
 	elseif string.find(input.Name, "Gamepad") then
 		attackButton.Text = "SALDIR\nR2"
-		hintText.Text = "Muhafıza yaklaş • Ekrandaki etkileşim tuşunu kullan"
+		hintText.Text = "Etkileşim: X • Harita: L3"
 	else
 		attackButton.Text = "SALDIR\nSol tık / F"
-		hintText.Text = "Muhafıza yaklaş • E ile görev al • F ile saldır"
+		hintText.Text = "Hedef seç: M • Etkileşim: E • Saldırı: F"
 	end
 end
 UserInputService.LastInputTypeChanged:Connect(updateInputHint)
@@ -195,15 +199,9 @@ stateRemote.OnClientEvent:Connect(function(state)
 	goldText.Text = string.format("Altın %d  •  Yıldız tozu %d", state.gold or 0, state.stardust or 0)
 	worldHUD:setState(state)
 	progressionFeedback:setState(state)
+	journeyHUD:setState(state)
+	interactionVFX:setState(state)
 	targetHUD.setState(state)
-	if state.questStatus == "active" then
-		questText.Text = string.format("Ormanı koru: %d / %d yaratık yenildi.", state.questKills or 0, state.questTarget or 3)
-	elseif state.questStatus == "return" then
-		questText.Text = "Görev tamam! Ödülün için muhafıza dön."
-	elseif state.questStatus == "completed" then
-		questText.Text = "Orman güvende. Yeni görev için muhafızla konuş."
-	else questText.Text = "Muhafızı bul ve ilk görevini al." end
-	crystalText.Text = state.hasCrystal and "Kristal • Çantanda bir orman kristali var" or "Kristal • Görev ödülünü kazan"
 	local saveMessages = { ["Studio: geçici"] = "Studio • İlerleme bu oturum için geçici", ["Kaydedildi"] = "İlerleme kaydedildi", ["Kayıt hatası"] = "Kayıt hatası • İlerlemen kaydedilemedi" }
 	saveText.Text = saveMessages[state.saveStatus] or ""
 end)

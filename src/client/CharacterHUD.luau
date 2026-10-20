@@ -13,25 +13,26 @@ function CharacterHUD.create(gui, parent, remotes, make, label, button, colors, 
 	local claimRemote = remotes:WaitForChild("ClaimExpedition")
 	local classButtons = {}
 	for index, id in ipairs({ "warrior", "mage" }) do
-		classButtons[id] = button(parent, Config.Classes[id].Name, UDim2.new((index - 1) * 0.5, index == 1 and 0 or 4, 0, 0), UDim2.new(0.5, -4, 0, 38), function() selectRemote:FireServer(id) end)
+		classButtons[id] = button(parent, Config.Classes[id].Name, UDim2.new((index - 1) * 0.5, index == 1 and 0 or 4, 0, 0), UDim2.new(0.5, -4, 0, 44), function() selectRemote:FireServer(id) end)
 	end
-	label(parent, "Sınıf değişimi: güvenli köyde, 10 sn savaş dışında.", UDim2.fromOffset(0, 40), UDim2.new(1, 0, 0, 20), 11, colors.muted)
+	label(parent, "Köyde değiştir · 10 sn savaş dışında", UDim2.fromOffset(0, 46), UDim2.new(1, 0, 0, 14), 11, colors.muted)
 	local stats = label(parent, "", UDim2.fromOffset(0, 64), UDim2.new(1, 0, 0, 25), 14, colors.gold)
 	label(parent, "BORİN'İN OCAĞI", UDim2.fromOffset(0, 98), UDim2.new(1, 0, 0, 23), 15, colors.gold)
 	local equipment = label(parent, "", UDim2.fromOffset(0, 124), UDim2.new(1, -126, 0, 44), 13)
-	local craft = button(parent, "YÜKSELT", UDim2.new(1, -118, 0, 127), UDim2.fromOffset(118, 36), function()
+	local craft = button(parent, "YÜKSELT", UDim2.new(1, -118, 0, 127), UDim2.fromOffset(118, 44), function()
 		if Config.Equipment[(self.state.equipmentTier or 0) + 1] then craftRemote:FireServer() end
 	end)
 	local materials = label(parent, "", UDim2.fromOffset(0, 171), UDim2.new(1, 0, 0, 24), 12, colors.muted)
 	label(parent, "Kaynaklara yaklaş → E ile topla. Üretim için Borin'e yaklaş.", UDim2.fromOffset(0, 213), UDim2.new(1, 0, 0, 23), 11, colors.muted)
 	label(parent, "SEFER GÜNLÜĞÜ", UDim2.fromOffset(0, 243), UDim2.new(1, 0, 0, 24), 15, colors.gold)
 	local expedition = label(parent, "", UDim2.fromOffset(0, 270), UDim2.new(1, -126, 0, 65), 12)
-	local claim = button(parent, "ÖDÜLÜ AL", UDim2.new(1, -118, 0, 278), UDim2.fromOffset(118, 36), function()
+	local claim = button(parent, "ÖDÜLÜ AL", UDim2.new(1, -118, 0, 278), UDim2.fromOffset(118, 44), function()
 		local progress = self.state.expedition
 		local stage = progress and Config.Expedition[progress.stage]
 		if stage and progress.progress >= stage.Target then claimRemote:FireServer() end
 	end)
 	local rewards = label(parent, "", UDim2.fromOffset(0, 338), UDim2.new(1, 0, 0, 28), 12, colors.muted)
+	local questCrystal = label(parent, "", UDim2.fromOffset(0, 366), UDim2.new(1, 0, 0, 18), 11, colors.gold)
 	local contractHUD = require(script.Parent:WaitForChild("ContractHUD")).create(gui, parent, remotes, make, label, button, colors)
 
 	local hotbar = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -72), Size = UDim2.fromOffset(248, 89), BackgroundColor3 = colors.panel, BackgroundTransparency = 0.12, BorderSizePixel = 0 }, gui)
@@ -82,6 +83,7 @@ function CharacterHUD.create(gui, parent, remotes, make, label, button, colors, 
 	end
 	function self:setState(state)
 		self.state = state
+		questCrystal.Text = state.hasCrystal and "Orman kristali · Çantanda" or "Orman kristali · Eldrin'in görev ödülü"
 		contractHUD:setState(state)
 		local classId = state.classId or "warrior"
 		for id, item in pairs(classButtons) do item.Text = (id == classId and "✓ " or "") .. Config.Classes[id].Name end
